@@ -11,13 +11,13 @@ exports.signup = (req, res) => {
     email: req.body.email,
     password: bcrypt.hashSync(req.body.password, 8),
   });
-
+  console.log(req.body.roles);
   user.save((err, user) => {
     if (err) {
       res.status(500).send({ message: err });
       return;
     }
-
+    
     if (req.body.roles) {
       Role.find(
         {
@@ -60,7 +60,7 @@ exports.signup = (req, res) => {
 
 exports.signin = (req, res) => {
   User.findOne({
-    username: req.body,username,
+    username: req.body.username,
   })
   .populate('roles', '-__v')
   .exec((err, user) => {
