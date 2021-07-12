@@ -4,8 +4,24 @@ const db = require('../models');
 const User = db.user;
 const Role = db.role;
 
+const isAvailable = (req, res, next) => {
+  User.findById(req.userId).exec((err, user) => {
+    if (err) {
+      res.status(500).send({ message: err });
+      return;
+    }
+
+    if (user.deleted) {
+      res.status(410).send({ message: 'The user is not available' });
+      return;
+    }
+
+    next();
+  });
+}
+
 const verifyToken = (req, res, next) => {
-  let token = req.headers['x-access-token'];
+  const token = req.headers['x-access-token'];
 
   if (!token) {
     return res.status(403).send({ message: 'No token provided.' });
@@ -38,11 +54,13 @@ const isAdmin = (req, res, next) => {
           return;
         }
 
-        for (let i = 0; i > roles.length; i++) {
-          if (roles[i].name === 'admin') {
-            next();
-            return;
-          } 
+        const isAdmin = roles.some(role => {
+          return role.name === 'admin';
+        })
+
+        if (isAdmin) {
+          next();
+          return;
         }
 
         res.status(403).send({ message: 'Require Admin role' });

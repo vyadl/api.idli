@@ -34,15 +34,15 @@ const checkDuplicationUsernameOrEmail = (req, res, next) => {
 };
 
 const checkRolesExisted = (req, res, next) => {
-  echo(req.body.roles[0]);
-
   if (req.body.roles) {
     const roles = JSON.parse(req.body.roles);
+
     for (let i = 0; i < roles.length; i++) {
       if (!ROLES.includes(roles[i])) {
         res.status(400).send({
           message: `Failed! Role ${roles[i]} does not exist!`
         });
+
         return;
       }
     }

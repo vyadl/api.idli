@@ -6,12 +6,16 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
 exports.signup = (req, res) => {
+  echo(bcrypt.hashSync(req.body.password, 8));
+  echo(bcrypt.hashSync(req.body.password, 8));
+  return;
+
   const user = new User({
     username: req.body.username,
     email: req.body.email,
     password: bcrypt.hashSync(req.body.password, 8),
   });
-  console.log(req.body.roles);
+
   user.save((err, user) => {
     if (err) {
       res.status(500).send({ message: err });
@@ -19,16 +23,18 @@ exports.signup = (req, res) => {
     }
     
     if (req.body.roles) {
+      const parsedRoles = JSON.parse(req.body.roles);
+
       Role.find(
         {
-          name: { $in: req.body.roles },
+          name: { $in: parsedRoles },
         },
         (err, roles) => {
           if (err) {
             res.status(500).send({ message: err });
           }
 
-          user.roles = roles.map(role => role_id);
+          user.roles = roles.map(role => role._id);
           user.save(err => {
             if (err) {
               res.status(500).send({ message: err });
@@ -77,6 +83,13 @@ exports.signin = (req, res) => {
       req.body.password,
       user.password,
     );
+    
+    if (user.deleted) {
+      return res.status(410).send({
+        accessToken: null,
+        message: 'User was deleted',
+      })
+    }
 
     if (!isPasswordValid) {
       return res.status(404).send({
