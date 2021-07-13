@@ -8,35 +8,47 @@ const List = require('../models/list.model');
 const Item = require('../models/item.model');
 
 exports.addItem = (req, res) => {
+  echo(req);
   const body = req.body;
 
   if (!body.text) {
     res.status(400).send({ message: 'Text is required' });
   }
 
-  if (!body.listId) {
+  if (!req.params.listid) {
     res.status(400).send({ message: 'List ID is required' });
   }
 
   const item = new Item({
-    listId: req.body.listId,
+    listId: req.params.listid,
     text: req.body.text,
     details: req.body.details,
     tags: req.body.tags || [],
     categories: req.body.categories || [],
   });
 
-  item.save((err, list) => {
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
-    }
+  List.findById(req.params.listid).exec((err, list) => {
+    list.items.push(item);
 
-    res.status(200).send({ item });
+    item.save(err => {
+      if (err) {
+        res.status(500).send({ message: err });
+        return;
+      }
+
+      list.save((err, list) => {
+        if (err) {
+          res.status(500).send({ message: err });
+          return;
+        }
+    
+        res.status(200).send({ item });
+      });
+    });
   });
 }
 
-exports.updateList = (req, res) => {
+exports.updateItem = (req, res) => {
   const list = new List({
     userId: req.userId,
     name: req.body.name,
@@ -54,20 +66,13 @@ exports.updateList = (req, res) => {
   });
 }
 
-exports.deleteList = (req, res) => {
-  const list = new List({
-    userId: req.userId,
-    name: req.body.name,
-    isPrivate: req.body.isPrivate,
-    items: [],
-  });
-
-  list.save((err, list) => {
+exports.deleteItem = (req, res) => {
+  Item.findByIdAndDelete(req.params.id).exec(err => {
     if (err) {
       res.status(500).send({ message: err });
       return;
     }
 
-    res.status(200).send({ list });
+    res.status(200).send({ message: 'The item is successfully deleted' });
   });
 }

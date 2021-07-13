@@ -44,6 +44,7 @@ exports.signup = (req, res) => {
       Role.findOne({ name: 'user' }, (err, role) => {
         if (err) {
           res.status(500).send({ message: err });
+
           return;
         }
 
@@ -80,7 +81,7 @@ exports.signin = (req, res) => {
       user.password,
     );
     
-    if (user.deleted) {
+    if (user.isDeleted) {
       return res.status(410).send({
         accessToken: null,
         message: 'User was deleted',

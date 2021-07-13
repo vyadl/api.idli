@@ -1,4 +1,5 @@
-const { authJwt, verifyListUpdate } = require('./../middlewares');
+const { body, param, oneOf } = require('express-validator');
+const { authJwt, verifyListUpdate, validation } = require('./../middlewares');
 const controller = require('./../controllers/list.controller');
 
 module.exports = function(app) {
@@ -10,31 +11,48 @@ module.exports = function(app) {
     next();
   });
 
-  app.get('/api/list/get/:id', controller.getList);
+  app.get('/api/lists', [authJwt.verifyToken], controller.getListsForCurrentUser);
+
+  app.get('/api/list/get/:id', [authJwt.getUserId], controller.getList);
 
   app.post(
-    '/api/list/new',
+    '/api/list/add',
     [
+      body('name').exists().isString(),
+      body('isPrivate').if(body('isPrivate').exists()).isBoolean(),
+      validation.verifyBasicValidation,
       authJwt.verifyToken,
     ],
     controller.addList,
   );
 
-  // app.update(
-  //   '/api/list/update/:id',
-  //   [
-  //     authJwt.verifyToken,
-  //     verifyListUpdate.isListBelongToUser,
-  //   ],
-  // controller.updateList,
-  // );
-
-  app.delete(
-    '/api/list/delete/:id',
+  app.patch(
+    '/api/list/update/:listid',
     [
+      param('listid').isString(),
+      body('isPrivate').if(body('isPrivate').exists()).isBoolean(),
+      body('categories').if(body('categories').exists()).isArray(),
+      body('tags').if(body('tags').exists()).isArray(),
+      body('name').if(body('name').exists()).isString(),
+      oneOf([
+        body('isPrivate').exists(),
+        body('categories').exists(),
+        body('tags').exists(),
+        body('name').exists(),
+      ], 'At least one field to change is required (name, isPrivate, tags, name)'),
+      validation.verifyBasicValidation,
       authJwt.verifyToken,
       verifyListUpdate.isListBelongToUser,
     ],
     controller.updateList,
+  );
+
+  app.delete(
+    '/api/list/delete/:listid',
+    [
+      authJwt.verifyToken,
+      verifyListUpdate.isListBelongToUser,
+    ],
+    controller.deleteList,
   );
 };

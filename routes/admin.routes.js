@@ -1,4 +1,4 @@
-const { authJwt } = require('./../middlewares');
+const { authJwt, validation } = require('./../middlewares');
 const { verifySignUp } = require('./../middlewares');
 const controller = require('../controllers/admin.controller');
 

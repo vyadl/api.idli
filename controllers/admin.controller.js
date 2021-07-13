@@ -38,9 +38,7 @@ exports.softDeleteUser = (req, res) => {
     return;
   }
 
-  User.findOne(
-    { _id: id },
-  ).exec((err, user) => {
+  User.findByIs(id).exec((err, user) => {
     if (err) {
       res.status(500).send({ message: err });
       return;
@@ -51,7 +49,7 @@ exports.softDeleteUser = (req, res) => {
       return;
     }
 
-    user.deleted = true;
+    user.isDeleted = true;
 
     user.save(err => {
       if (err) {

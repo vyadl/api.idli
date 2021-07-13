@@ -2,7 +2,7 @@ const db = require('../models');
 const List = db.list;
 
 exports.isListBelongToUser = (req, res, next) => {
-  List.findOne({ _id: req.params.id }).exec((err, list) => {
+  List.findOne({ _id: req.params.listid }).exec((err, list) => {
     if (err) {
       res.status(500).send({ message: err });
       return;

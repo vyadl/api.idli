@@ -11,7 +11,7 @@ const isAvailable = (req, res, next) => {
       return;
     }
 
-    if (user.deleted) {
+    if (user.isDeleted) {
       res.status(410).send({ message: 'The user is not available' });
       return;
     }
@@ -33,6 +33,20 @@ const verifyToken = (req, res, next) => {
     }
 
     req.userId = decoded.id;
+    next();
+  });
+};
+
+const getUserId = (req, res, next) => {
+  const token = req.headers['x-access-token'];
+
+  jwt.verify(token, config.secret, (err, decoded) => {
+    if (decoded) {
+      req.userId = decoded.id;
+    } else {
+      req.userId = null;
+    }
+
     next();
   });
 };
@@ -72,6 +86,7 @@ const isAdmin = (req, res, next) => {
 const authJwt = {
   verifyToken,
   isAdmin,
+  getUserId,
 };
 
 module.exports = authJwt;
