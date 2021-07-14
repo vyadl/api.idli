@@ -6,31 +6,36 @@ const Role = db.role;
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const List = require('../models/list.model');
+const Item = require('../models/item.model');
+const { resolve500Error } = require('./../middlewares/validation');
 
 exports.getListsForCurrentUser = (req, res) => {
   List.find({ userId: req.userId })
     .exec((err, lists) => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
-      }
+      resolve500Error(err, req, res);
 
       res.status(200).send({ lists });
     });
 }
 
-exports.getListsById = (req, res) => {
-  List.find({ userId: req.params.id })
-    .exec((err, lists) => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
-      }
+exports.getPublicListsByUserId = (req, res) => {
+  User.findById(req.params.userid, (err, user) => {
+    if (!user) {
+      return res.status(410).send({ message: 'User was not found' });
+    }
 
-      const publicLists = lists.filter(list => !list.isPrivate);
+    if (user.isDeleted) {
+      return res.status(410).send({ message: 'User was deleted' });
+    }
 
-      res.status(200).send({ lists: publicLists });
+    List.find({
+      userId: req.params.userid,
+      isPrivate: false,
+    }, (err, lists) => {
+      resolve500Error(err, req, res);
+      res.status(200).send({ lists });
     });
+  });
 }
 
 exports.getList = (req, res) => {
@@ -39,10 +44,7 @@ exports.getList = (req, res) => {
   List.findById(listId)
     .populate('items', '-__v')
     .exec((err, list) => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
-      }
+      resolve500Error(err, req, res);
 
       if (!list) {
         return res.status(404).send({ message: 'List doesn\'t exist' });
@@ -71,10 +73,7 @@ exports.addList = (req, res) => {
   });
 
   list.save((err, list) => {
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
-    }
+    resolve500Error(err, req, res);
 
     res.status(200).send({ list });
   });
@@ -86,13 +85,8 @@ exports.updateList = (req, res) => {
       list[field] = req.body[field];
     });
 
-    echo(list);
-
     list.save((err, updatedList) => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
-      }
+      resolve500Error(err, req, res);
 
       res.status(200).send({ updatedList });
     });
@@ -100,12 +94,16 @@ exports.updateList = (req, res) => {
 }
 
 exports.deleteList = (req, res) => {
-  List.findByIdAndDelete(req.params.listid).exec(err => {
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
-    }
+  List.findById(req.params.listid)
+    .exec((err, list) => {
+      resolve500Error(err, req, res);
 
-    res.status(200).send({ message: 'The list is successfully deleted' });
-  });
+      Item.deleteMany({ _id: { $in: list.items }}, (err, result) => {
+        list.remove((err, result) => {
+          resolve500Error(err, req, res);
+
+          res.status(200).send({ message: 'The list is successfully deleted' });
+        })
+      });
+    });
 }

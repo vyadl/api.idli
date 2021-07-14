@@ -2,15 +2,13 @@ const { rawListeners } = require('../models/role.model');
 const db = require('../models');
 const ROLES = db.ROLES;
 const User = db.user;
+const { resolve500Error } = require('./../middlewares/validation');
 
 const checkDuplicationUsernameOrEmail = (req, res, next) => {
   User.findOne({
     username: req.body.username,
   }).exec((err, user) => {
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
-    }
+    resolve500Error(err, req, res);
 
     if (user) {
       res.status(400).send({ message: 'Failed! Username is already in use/' })
@@ -19,10 +17,7 @@ const checkDuplicationUsernameOrEmail = (req, res, next) => {
     User.findOne({
       email: req.body.email,
     }).exec((err, email) => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
-      }
+      resolve500Error(err, req, res);
 
       if (email) {
         res.status(400).send({ message: 'Failed! Email is already in use/' })

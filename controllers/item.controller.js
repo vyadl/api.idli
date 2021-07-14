@@ -1,13 +1,44 @@
 const config = require('../config/auth.config');
 const db = require('../models');
 const User = db.user;
-const Role = db.role;
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const List = require('./../models/list.model');
 const Item = require('./../models/item.model');
-const { resolve500ErrorInContoller } = require('./../middlewares/validation');
+const { resolve500Error } = require('./../middlewares/validation');
 
+
+exports.getItem = (req, res) => {
+  List.findById(req.params.listid, (err, list) => {
+    resolve500Error(err, req, res);
+
+    User.findById(list.userId, (err, user) => {
+      resolve500Error(err, req, res);
+
+      if (!user) {
+        return res.status(410).send({ message: 'User was not found' });
+      }
+  
+      if (user.isDeleted) {
+        return res.status(410).send({ message: 'User was deleted' });
+      }
+
+      if (list.isPrivate) {
+        return res.status(410).send({ message: 'This list is private' });
+      }
+
+      Item.findById(req.params.id, (err, item) => {
+        resolve500Error(err, req, res);
+
+        if (!item) {
+          return res.status(410).send({ message: 'The item doesn\'t exist' });
+        }
+
+        res.status(200).send({ item });
+      });
+    });
+  });
+};
 
 exports.addItem = (req, res) => {
   const body = req.body;
@@ -32,7 +63,7 @@ exports.addItem = (req, res) => {
     list.items.push(item);
 
     item.save(err => {
-      resolve500ErrorInContoller(err, req, res);
+      resolve500Error(err, req, res);
 
       list.save((err, list) => {
         if (err) {
@@ -53,7 +84,7 @@ exports.updateItem = (req, res) => {
     });
 
     list.save((err, updatedList) => {
-      resolveErrorInContoller(err, req, res);
+      resolve500Error(err, req, res);
 
       res.status(200).send({ updatedList });
     });
@@ -61,15 +92,21 @@ exports.updateItem = (req, res) => {
 }
 
 exports.deleteItem = (req, res) => {
-  Item.findByIdAndDelete(req.params.id).exec(err => {
-    resolve500ErrorInContoller(err, req, res);
+  Item.findByIdAndDelete(req.params.id).exec((err, result) => {
+    resolve500Error(err, req, res);
+
+    if (!result) {
+      res.status(400).send({ message: 'The item doesn\'t exist' });
+      return;
+    }
 
     List.findById(req.params.listid).exec((err, list) => {
-      list.items = list.items.filter(id => id !== req.params.id);
-  
+      list.items = list.items.filter(id => String(id) !== String(req.params.id));
+
+
       list.save((err, list) => {
-        resolve500ErrorInContoller(err, req, res);
-    
+        resolve500Error(err, req, res);
+
         res.status(200).send({ message: 'The item is successfully deleted' });
       });
     });

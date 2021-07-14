@@ -7,5 +7,5 @@ exports.userBoard = (req, res) => {
 };
 
 exports.adminBoard = (req, res) => {
-  res.status(200).send('adminBoard');
+  res.status(200).send('Admin content');
 };

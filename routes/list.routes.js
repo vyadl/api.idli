@@ -13,7 +13,14 @@ module.exports = function(app) {
 
   app.get('/api/lists', [authJwt.verifyToken], controller.getListsForCurrentUser);
 
-  app.get('/api/list/get/:id', [authJwt.getUserId], controller.getList);
+  app.get('/api/list/:id', [authJwt.getUserId], controller.getList);
+
+  app.get('/api/user/lists/:userid', [
+      param('userid').isString(),
+      validation.verifyBasicValidation,
+    ],
+    controller.getPublicListsByUserId,
+  );
 
   app.post(
     '/api/list/add',

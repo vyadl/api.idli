@@ -1,12 +1,10 @@
 const db = require('../models');
 const List = db.list;
+const { resolve500Error } = require('./../middlewares/validation');
 
 exports.isListBelongToUser = (req, res, next) => {
   List.findOne({ _id: req.params.listid }).exec((err, list) => {
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
-    }
+    resolve500Error(err, req, res);
 
     if (!list) {
       res.status(410).send({ message: 'This list doesn\'t exist' });

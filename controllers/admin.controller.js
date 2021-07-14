@@ -3,6 +3,7 @@ const db = require('../models');
 const User = db.user;
 const Role = db.role;
 const jwt = require('jsonwebtoken');
+const { resolve500Error } = require('./../middlewares/validation');
 
 exports.hardDeleteUser = (req, res) => {
   const id = req.params.id;
@@ -15,10 +16,7 @@ exports.hardDeleteUser = (req, res) => {
   User.deleteOne(
     { _id: id },
     (err, { deletedCount }) => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
-      }
+      resolve500Error(err, req, res);
 
       if (!deletedCount) {
         res.status(400).send({ message: `User with id ${id} does not exist` });
@@ -39,10 +37,7 @@ exports.softDeleteUser = (req, res) => {
   }
 
   User.findByIs(id).exec((err, user) => {
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
-    }
+    resolve500Error(err, req, res);
 
     if (!user) {
       res.status(400).send({ message: `User with id ${id} does not exist` });
@@ -52,9 +47,7 @@ exports.softDeleteUser = (req, res) => {
     user.isDeleted = true;
 
     user.save(err => {
-      if (err) {
-        res.status(500).send({ message: err });
-      }
+      resolve500Error(err, req, res);
 
       res.send({ message: 'User successfully soft deleted' });
     })

@@ -3,13 +3,11 @@ const config = require('../config/auth.config.js');
 const db = require('../models');
 const User = db.user;
 const Role = db.role;
+const { resolve500Error } = require('./../middlewares/validation');
 
 const isAvailable = (req, res, next) => {
   User.findById(req.userId).exec((err, user) => {
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
-    }
+    resolve500Error(err, req, res);
 
     if (user.isDeleted) {
       res.status(410).send({ message: 'The user is not available' });

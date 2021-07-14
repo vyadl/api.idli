@@ -11,6 +11,16 @@ module.exports = function(app) {
     next();
   });
 
+  app.get(
+    '/api/item/:listid/:id',
+    [
+      param('listid').exists().isString(),
+      param('id').exists().isString(),
+      validation.verifyBasicValidation,
+    ],
+    controller.getItem,
+  );
+
   app.post(
     '/api/item/add/:listid',
     body('text').exists().isString(),

@@ -4,6 +4,7 @@ const User = db.user;
 const Role = db.role;
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const { resolve500Error } = require('./../middlewares/validation');
 
 exports.signup = (req, res) => {
   const user = new User({
@@ -13,10 +14,7 @@ exports.signup = (req, res) => {
   });
 
   user.save((err, user) => {
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
-    }
+    resolve500Error(err, req, res);
     
     if (req.body.roles) {
       const parsedRoles = JSON.parse(req.body.roles);
@@ -26,15 +24,11 @@ exports.signup = (req, res) => {
           name: { $in: parsedRoles },
         },
         (err, roles) => {
-          if (err) {
-            res.status(500).send({ message: err });
-          }
+          resolve500Error(err, req, res);
 
           user.roles = roles.map(role => role._id);
           user.save(err => {
-            if (err) {
-              res.status(500).send({ message: err });
-            }
+            resolve500Error(err, req, res);
 
             res.send({ message: 'User successfully created' });
           })
@@ -42,11 +36,7 @@ exports.signup = (req, res) => {
       )
     } else {
       Role.findOne({ name: 'user' }, (err, role) => {
-        if (err) {
-          res.status(500).send({ message: err });
-
-          return;
-        }
+        resolve500Error(err, req, res);
 
         user.roles = [role._id];
         user.save(err => {
@@ -96,7 +86,7 @@ exports.signin = (req, res) => {
     }
 
     const token = jwt.sign({ id: user.id }, config.secret, {
-      expiresIn: 60, // 1 minute
+      expiresIn: 100000, // 1 minute
     })
     const authorities = [];
 
