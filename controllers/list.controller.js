@@ -52,7 +52,6 @@ exports.getList = (req, res) => {
         res.status(200).send({ list });
       } else {
         if (!req.userId) {
-          echo(1);
           res.status(400).send({ message: 'List is private' });
         } else if (req.userId !== list.userId) {
           return res.status(400).send({ message: 'List is private 2' });

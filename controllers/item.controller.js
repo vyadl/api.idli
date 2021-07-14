@@ -4,11 +4,12 @@ const User = db.user;
 const Role = db.role;
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const List = require('../models/list.model');
-const Item = require('../models/item.model');
+const List = require('./../models/list.model');
+const Item = require('./../models/item.model');
+const { resolve500ErrorInContoller } = require('./../middlewares/validation');
+
 
 exports.addItem = (req, res) => {
-  echo(req);
   const body = req.body;
 
   if (!body.text) {
@@ -31,10 +32,7 @@ exports.addItem = (req, res) => {
     list.items.push(item);
 
     item.save(err => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
-      }
+      resolve500ErrorInContoller(err, req, res);
 
       list.save((err, list) => {
         if (err) {
@@ -49,30 +47,31 @@ exports.addItem = (req, res) => {
 }
 
 exports.updateItem = (req, res) => {
-  const list = new List({
-    userId: req.userId,
-    name: req.body.name,
-    isPrivate: req.body.isPrivate,
-    items: [],
-  });
+  Item.findById(req.params.id, (err, list) => {
+    Object.keys(req.body).forEach(field => {
+      list[field] = req.body[field];
+    });
 
-  list.save((err, list) => {
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
-    }
+    list.save((err, updatedList) => {
+      resolveErrorInContoller(err, req, res);
 
-    res.status(200).send({ list });
+      res.status(200).send({ updatedList });
+    });
   });
 }
 
 exports.deleteItem = (req, res) => {
   Item.findByIdAndDelete(req.params.id).exec(err => {
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
-    }
+    resolve500ErrorInContoller(err, req, res);
 
-    res.status(200).send({ message: 'The item is successfully deleted' });
+    List.findById(req.params.listid).exec((err, list) => {
+      list.items = list.items.filter(id => id !== req.params.id);
+  
+      list.save((err, list) => {
+        resolve500ErrorInContoller(err, req, res);
+    
+        res.status(200).send({ message: 'The item is successfully deleted' });
+      });
+    });
   });
 }

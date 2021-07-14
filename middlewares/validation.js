@@ -14,4 +14,11 @@ exports.verifyBasicValidation = (req, res, next) => {
   }
 
   next();
-}
+};
+
+exports.resolve500ErrorInContoller = (err, req, res) => {
+  if (err) {
+    res.status(500).send({ message: err });
+    return;
+  }
+};
