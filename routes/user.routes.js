@@ -15,7 +15,7 @@ module.exports = function(app) {
   app.get(
     '/api/test/user',
     [
-      authJwt.verifyToken
+      authJwt.verifyToken,
     ],
     controller.userBoard,
   );
@@ -23,7 +23,7 @@ module.exports = function(app) {
     '/api/test/admin',
     [
       authJwt.verifyToken,
-      authJwt.isAdmin
+      authJwt.isAdmin,
     ],
     controller.adminBoard,
   );

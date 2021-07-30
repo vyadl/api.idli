@@ -78,15 +78,28 @@ exports.addItem = (req, res) => {
 }
 
 exports.updateItem = (req, res) => {
-  Item.findById(req.params.id, (err, list) => {
-    Object.keys(req.body).forEach(field => {
-      list[field] = req.body[field];
-    });
+  List.findById(req.params.listid, (err, list) => {
 
-    list.save((err, updatedList) => {
-      resolve500Error(err, req, res);
+    if (req.body.tags?.length || req.body.category) {
+      if (req.body.tags) {
+        if (req.body.tags.some(tag => !list.tags.includes(tag))) {
+          return res.status(400).send({ message: 'There is no such tag in this list' });
+        }
+      } else if (!list.categories.includes(req.body.category)) {
+        return res.status(400).send({ message: 'There is no such category in this list' });
+      }
+    }
 
-      res.status(200).send({ updatedList });
+    Item.findById(req.params.id, (err, item) => {
+      Object.keys(req.body).forEach(field => {
+        item[field] = req.body[field];
+      });
+  
+      item.save((err, updatedItem) => {
+        resolve500Error(err, req, res);
+  
+        res.status(200).send({ updatedItem });
+      });
     });
   });
 }

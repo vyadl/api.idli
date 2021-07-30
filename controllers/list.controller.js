@@ -8,6 +8,10 @@ const bcrypt = require('bcryptjs');
 const List = require('../models/list.model');
 const Item = require('../models/item.model');
 const { resolve500Error } = require('./../middlewares/validation');
+const {
+  removeDeletedTagsAndCategoriesFromItems,
+  getFinalFieldsForList,
+} = require('./listActions/list.actions');
 
 exports.getListsForCurrentUser = (req, res) => {
   List.find({ userId: req.userId })
@@ -65,11 +69,32 @@ exports.getList = (req, res) => {
 }
 
 exports.addList = (req, res) => {
+  const tags = [];
+  const categories = [];
+
+  if (req.body.tags?.length) {
+    tags = req.body.tags.map((tag, i) => {
+      tag.id = String(i);
+
+      return tag;
+    });
+  }
+
+  if (req.body.categories?.length) {
+    categories = req.body.categories.map((category, i) => {
+      category.id = i;
+
+      return category;
+    });
+  }
+
   const list = new List({
     userId: req.userId,
     name: req.body.name,
     isPrivate: req.body.isPrivate || false,
     items: [],
+    tags,
+    categories,
   });
 
   list.save((err, list) => {
@@ -80,18 +105,34 @@ exports.addList = (req, res) => {
 }
 
 exports.updateList = (req, res) => {
-  List.findById(req.params.listid, (err, list) => {
-    Object.keys(req.body).forEach(field => {
-      list[field] = req.body[field];
-    });
+  List.findById(req.params.listid).exec((err, list) => {
+    resolve500Error(err, req, res);
+  
+    const oldList = JSON.parse(JSON.stringify(list));
+    const finalFieldsForList = getFinalFieldsForList(req.body);
 
+    Object.keys(finalFieldsForList).forEach((field) => {
+      list[field] = finalFieldsForList[field];
+    });
+    
     list.save((err, updatedList) => {
       resolve500Error(err, req, res);
 
-      res.status(200).send({ updatedList });
+      removeDeletedTagsAndCategoriesFromItems({ list: oldList, req, res }).then(() => {
+        List
+            .findById(updatedList._id)
+            .populate('items', '-__v')
+            .exec((err, populatedList) => {
+              resolve500Error(err, req, res);
+  
+              return res.status(200).send({ list: populatedList });
+            });
+      }).catch(err => {
+        resolve500Error(err, req, res);
+      });
     });
   });
-}
+};
 
 exports.deleteList = (req, res) => {
   List.findById(req.params.listid)

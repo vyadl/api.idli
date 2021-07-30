@@ -46,7 +46,7 @@ module.exports = function(app) {
         body('categories').exists(),
         body('tags').exists(),
         body('name').exists(),
-      ], 'At least one field to change is required (name, isPrivate, tags, name)'),
+      ], 'At least one field to change is required (name, isPrivate, tags, categories, name)'),
       validation.verifyBasicValidation,
       authJwt.verifyToken,
       verifyListUpdate.isListBelongToUser,

@@ -1,0 +1,6 @@
+exports.checkIsSomethingDeletedByIds = (oldObj, newObj) => {
+  const oldIds = Object.values(oldObj).map(item => item.id);
+  const newIds = Object.values(newObj).map(item => item.id);
+
+  return oldIds.some(oldId => !newIds.includes(oldId));
+}

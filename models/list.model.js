@@ -6,6 +6,8 @@ const List = mongoose.model(
     userId: String,
     name: String,
     isPrivate: Boolean,
+    tags: Array,
+    categories: Array,
     items: [
       {
         type: 'ObjectId',

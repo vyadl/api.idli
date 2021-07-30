@@ -7,7 +7,7 @@ const Item = mongoose.model(
     text: String,
     details: String,
     tags: Array,
-    categories: Array,
+    category: Number,
   }),
 );
 
