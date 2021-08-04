@@ -66,9 +66,7 @@ exports.addItem = (req, res) => {
       resolve500Error(err, req, res);
 
       list.save((err, list) => {
-        if (err) {
-          return res.status(500).send({ message: err });
-        }
+        resolve500Error(err, req, res);
     
         res.status(200).send({ item });
       });
@@ -80,11 +78,11 @@ exports.updateItem = (req, res) => {
   List.findById(req.params.listid, (err, list) => {
 
     if (req.body.tags?.length || req.body.category) {
-      if (req.body.tags) {
-        if (req.body.tags.some(tag => !list.tags.includes(tag))) {
+      if (req.body.tags?.length) {
+        if (req.body.tags.some(tag => !list.tags.some(listTag => listTag.id === +tag))) {
           return res.status(400).send({ message: 'There is no such tag in this list' });
         }
-      } else if (!list.categories.includes(req.body.category)) {
+      } else if (!list.categories.some(category => category.id === +req.body.category)) {
         return res.status(400).send({ message: 'There is no such category in this list' });
       }
     }

@@ -72,8 +72,8 @@ exports.getList = (req, res) => {
 }
 
 exports.addList = (req, res) => {
-  const tags = [];
-  const categories = [];
+  let tags = [];
+  let categories = [];
 
   if (req.body.tags?.length) {
     tags = req.body.tags.map((tag, i) => {

@@ -20,9 +20,7 @@ exports.signup = (req, res) => {
       const parsedRoles = JSON.parse(req.body.roles);
 
       Role.find(
-        {
-          name: { $in: parsedRoles },
-        },
+        { name: { $in: parsedRoles } },
         (err, roles) => {
           resolve500Error(err, req, res);
 
@@ -35,7 +33,9 @@ exports.signup = (req, res) => {
         },
       )
     } else {
-      Role.findOne({ name: 'user' }, (err, role) => {
+      Role.findOne(
+        { name: 'user' },
+        (err, role) => {
         resolve500Error(err, req, res);
 
         user.roles = [role._id];
@@ -52,9 +52,7 @@ exports.signup = (req, res) => {
 };
 
 exports.signin = (req, res) => {
-  User.findOne({
-    username: req.body.username,
-  })
+  User.findOne({ username: req.body.username })
   .populate('roles', '-__v')
   .exec((err, user) => {
     if (err) {
@@ -84,9 +82,11 @@ exports.signin = (req, res) => {
       })
     }
 
-    const token = jwt.sign({ id: user.id }, config.secret, {
-      expiresIn: 60 * 60 * 24, // 1 day
-    })
+    const token = jwt.sign(
+      { id: user.id },
+      config.secret,
+      { expiresIn: 60 * 60 * 24 }, // 1 day
+    )
     const authorities = [];
 
     for (let i = 0; i > user.roles.length; i++) {
