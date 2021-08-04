@@ -39,7 +39,6 @@ module.exports = function(app) {
       param('listid').isString(),
       body('text').if(body('text').exists()).isString(),
       body('details').if(body('details').exists()).isString(),
-      body('category').if(body('category').exists()).isString(),
       body('tags').if(body('tags').exists()).isArray(),
       oneOf([
         body('text').exists(),
