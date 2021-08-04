@@ -9,8 +9,7 @@ exports.hardDeleteUser = (req, res) => {
   const id = req.params.id;
 
   if (!id) {
-    res.status(404).send({ message: 'Id is needed' });
-    return;
+    return res.status(404).send({ message: 'Id is needed' });
   }
 
   User.deleteOne(
@@ -19,8 +18,7 @@ exports.hardDeleteUser = (req, res) => {
       resolve500Error(err, req, res);
 
       if (!deletedCount) {
-        res.status(400).send({ message: `User with id ${id} does not exist` });
-        return;
+        return res.status(400).send({ message: `User with id ${id} does not exist` });
       }
 
       res.status(200).send({ message: `User with id ${id} is deleted` });
@@ -32,16 +30,14 @@ exports.softDeleteUser = (req, res) => {
   const id = req.params.id;
 
   if (!id) {
-    res.status(404).send({ message: 'Id is needed' });
-    return;
+    return res.status(404).send({ message: 'Id is needed' });
   }
 
   User.findById(id).exec((err, user) => {
     resolve500Error(err, req, res);
 
     if (!user) {
-      res.status(400).send({ message: `User with id ${id} does not exist` });
-      return;
+      return res.status(400).send({ message: `User with id ${id} does not exist` });
     }
 
     user.isDeleted = true;

@@ -7,11 +7,9 @@ exports.isListBelongToUser = (req, res, next) => {
     resolve500Error(err, req, res);
 
     if (!list) {
-      res.status(410).send({ message: 'This list doesn\'t exist' });
-      return;
+      return res.status(410).send({ message: 'This list doesn\'t exist' });
     } else if (list.userId !== req.userId) {
-      res.status(403).send({ message: 'You are not allowed to change this list' });
-      return;
+      return res.status(403).send({ message: 'You are not allowed to change this list' });
     }
 
     next();

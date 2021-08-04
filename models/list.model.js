@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { toClient } = require('./../utils/utils');
 
 const schema = new mongoose.Schema({
   userId: String,
@@ -14,17 +15,6 @@ const schema = new mongoose.Schema({
   ],
 });
 
-schema.method('toClient', function() {
-  const obj = this.toObject();
+schema.method('toClient', toClient);
 
-  obj.id = obj._id;
-
-  delete obj._id;
-  delete obj.__v;
-
-  return obj;
-});
-
-const List = mongoose.model('List', schema);
-
-module.exports = List;
+module.exports = mongoose.model('List', schema);

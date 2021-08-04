@@ -67,8 +67,7 @@ exports.addItem = (req, res) => {
 
       list.save((err, list) => {
         if (err) {
-          res.status(500).send({ message: err });
-          return;
+          return res.status(500).send({ message: err });
         }
     
         res.status(200).send({ item });
@@ -109,8 +108,7 @@ exports.deleteItem = (req, res) => {
     resolve500Error(err, req, res);
 
     if (!result) {
-      res.status(400).send({ message: 'The item doesn\'t exist' });
-      return;
+      return res.status(400).send({ message: 'The item doesn\'t exist' });
     }
 
     List.findById(req.params.listid).exec((err, list) => {

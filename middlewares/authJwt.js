@@ -10,8 +10,7 @@ const isAvailable = (req, res, next) => {
     resolve500Error(err, req, res);
 
     if (user.isDeleted) {
-      res.status(410).send({ message: 'The user is not available' });
-      return;
+      return res.status(410).send({ message: 'The user is not available' });
     }
 
     next();
@@ -52,8 +51,7 @@ const getUserId = (req, res, next) => {
 const isAdmin = (req, res, next) => {
   User.findById(req.userId).exec((err, user) => {
     if (err) {
-      res.status(500).send({ message: err });
-      return;
+      return res.status(500).send({ message: err });
     }
 
     Role.find(
@@ -62,8 +60,7 @@ const isAdmin = (req, res, next) => {
       },
       (err, roles) => {
         if (err) {
-          res.status(500).send({ message: err });
-          return;
+          return res.status(500).send({ message: err });
         }
 
         const isAdmin = roles.some(role => {

@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 global.echo = console.log;
 
 const express = require('express');
@@ -31,11 +33,21 @@ app.listen(PORT, () => {
 });
 
 const db = require('./models');
-const dbConfig = require('./config/db.config');
 const Role = db.role;
-echo('before connect to db');
+const dbConnectionString = `${
+    process.env.DB_PATH_PREFIX
+  }${
+    process.env.DB_USER
+  }:${
+    process.env.DB_PASS
+  }@${
+    process.env.DB_PATH
+  }/${
+    process.env.DB_NAME
+  }?retryWrites=true&w=majority`;
+
 db.mongoose
-  .connect(`mongodb+srv://idli_user:111111aa@idli.pt3qg.mongodb.net/idli_db?retryWrites=true&w=majority`, {
+  .connect(dbConnectionString, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
