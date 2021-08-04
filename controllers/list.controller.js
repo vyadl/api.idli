@@ -18,7 +18,9 @@ exports.getListsForCurrentUser = (req, res) => {
     .exec((err, lists) => {
       resolve500Error(err, req, res);
 
-      res.status(200).send({ lists });
+      finalLists = lists.map(list => list.toClient());
+
+      res.status(200).send(finalLists);
     });
 }
 
@@ -40,7 +42,7 @@ exports.getPublicListsByUserId = (req, res) => {
 
       finalLists = lists.map(list => list.toClient());
 
-      res.status(200).send({ lists: finalLists });
+      res.status(200).send(finalLists);
     });
   });
 }
@@ -58,14 +60,14 @@ exports.getList = (req, res) => {
       }
 
       if (!list.isPrivate) {
-        res.status(200).send({ list: list.toClient() });
+        res.status(200).send(list.listToClientPopulated());
       } else {
         if (!req.userId) {
           res.status(400).send({ message: 'List is private' });
         } else if (req.userId !== list.userId) {
           return res.status(400).send({ message: 'List is private 2' });
         } else {
-          return res.status(200).send({ list: list.toClient() });
+          return res.status(200).send(list.listToClientPopulated());
         }
       }
   });
@@ -103,7 +105,7 @@ exports.addList = (req, res) => {
   list.save((err, list) => {
     resolve500Error(err, req, res);
 
-    res.status(200).send({ list: list.toClient() });
+    res.status(200).send(list.toClient());
   });
 }
 
@@ -124,11 +126,11 @@ exports.updateList = (req, res) => {
       removeDeletedTagsAndCategoriesFromItems({ list: oldList, req, res }).then(() => {
         List
             .findById(updatedList._id)
-            .populate('items', '-__v')
+            .populate('items')
             .exec((err, populatedList) => {
               resolve500Error(err, req, res);
-  
-              return res.status(200).send({ list: populatedList.toClient() });
+
+              return res.status(200).send(populatedList.listToClientPopulated());
             });
       }).catch(err => {
         resolve500Error(err, req, res);

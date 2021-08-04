@@ -34,7 +34,7 @@ exports.getItem = (req, res) => {
           return res.status(410).send({ message: 'The item doesn\'t exist' });
         }
 
-        res.status(200).send({ item });
+        res.status(200).send(item.toClient());
       });
     });
   });
@@ -68,7 +68,7 @@ exports.addItem = (req, res) => {
       list.save((err, list) => {
         resolve500Error(err, req, res);
     
-        res.status(200).send({ item });
+        res.status(200).send(item.toClient());
       });
     });
   });
@@ -95,7 +95,7 @@ exports.updateItem = (req, res) => {
       item.save((err, updatedItem) => {
         resolve500Error(err, req, res);
   
-        res.status(200).send({ updatedItem });
+        res.status(200).send(updatedItem.toClient());
       });
     });
   });

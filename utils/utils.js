@@ -15,3 +15,15 @@ exports.toClient = function() {
 
   return obj;
 }
+
+exports.listToClientPopulated = function() {
+  const obj = this.toObject();
+
+  obj.id = obj._id;
+  obj.items = this.items.map(item => item.toClient());
+
+  delete obj._id;
+  delete obj.__v;
+
+  return obj;
+}

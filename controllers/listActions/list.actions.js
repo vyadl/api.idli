@@ -5,8 +5,12 @@ const { checkIsSomethingDeletedByIds } = require('../../utils/utils');
 
 exports.removeDeletedTagsAndCategoriesFromItems = ({ req, res, list }) => {
   const body = req.body;
-  const isAnyTagDeleted = checkIsSomethingDeletedByIds(list.tags, body.tags);
-  const isAnyCategoryDeleted = checkIsSomethingDeletedByIds(list.categories, body.categories);
+  const isAnyTagDeleted = body.tags
+    ? checkIsSomethingDeletedByIds(list.tags, body.tags)
+    : false;
+  const isAnyCategoryDeleted = body.categories
+    ? checkIsSomethingDeletedByIds(list.categories, body.categories)
+    : false;
 
   if (isAnyTagDeleted || isAnyCategoryDeleted) {
     return Item.find({ listId: list._id }, (err, items) => {
