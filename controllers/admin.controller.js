@@ -36,7 +36,7 @@ exports.softDeleteUser = (req, res) => {
     return;
   }
 
-  User.findByIs(id).exec((err, user) => {
+  User.findById(id).exec((err, user) => {
     resolve500Error(err, req, res);
 
     if (!user) {

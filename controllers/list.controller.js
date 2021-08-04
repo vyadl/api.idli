@@ -37,7 +37,10 @@ exports.getPublicListsByUserId = (req, res) => {
       isPrivate: false,
     }, (err, lists) => {
       resolve500Error(err, req, res);
-      res.status(200).send({ lists });
+
+      finalLists = lists.map(list => list.toClient());
+
+      res.status(200).send({ lists: finalLists });
     });
   });
 }
@@ -55,14 +58,14 @@ exports.getList = (req, res) => {
       }
 
       if (!list.isPrivate) {
-        res.status(200).send({ list });
+        res.status(200).send({ list: list.toClient() });
       } else {
         if (!req.userId) {
           res.status(400).send({ message: 'List is private' });
         } else if (req.userId !== list.userId) {
           return res.status(400).send({ message: 'List is private 2' });
         } else {
-          return res.status(200).send({ list });
+          return res.status(200).send({ list: list.toClient() });
         }
       }
   });
@@ -100,7 +103,7 @@ exports.addList = (req, res) => {
   list.save((err, list) => {
     resolve500Error(err, req, res);
 
-    res.status(200).send({ list });
+    res.status(200).send({ list: list.toClient() });
   });
 }
 
@@ -125,7 +128,7 @@ exports.updateList = (req, res) => {
             .exec((err, populatedList) => {
               resolve500Error(err, req, res);
   
-              return res.status(200).send({ list: populatedList });
+              return res.status(200).send({ list: populatedList.toClient() });
             });
       }).catch(err => {
         resolve500Error(err, req, res);
