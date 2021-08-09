@@ -14,4 +14,4 @@ exports.isListBelongToUser = (req, res, next) => {
 
     next();
   });
-}
+};

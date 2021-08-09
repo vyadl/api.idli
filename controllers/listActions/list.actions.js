@@ -4,20 +4,20 @@ const { resolve500Error } = require('../../middlewares/validation');
 const { checkIsSomethingDeletedByIds } = require('../../utils/utils');
 
 exports.removeDeletedTagsAndCategoriesFromItems = ({ req, res, list }) => {
-  const body = req.body;
-  const isAnyTagDeleted = body.tags
-    ? checkIsSomethingDeletedByIds(list.tags, body.tags)
+  const { categories, tags } = req.body;
+  const isAnyTagDeleted = tags
+    ? checkIsSomethingDeletedByIds(list.tags, tags)
     : false;
-  const isAnyCategoryDeleted = body.categories
-    ? checkIsSomethingDeletedByIds(list.categories, body.categories)
+  const isAnyCategoryDeleted = categories
+    ? checkIsSomethingDeletedByIds(list.categories, categories)
     : false;
 
   if (isAnyTagDeleted || isAnyCategoryDeleted) {
     return Item.find({ listId: list._id }, (err, items) => {
       resolve500Error(err, req, res);
 
-      const tagIds = body.tags.map(tag => tag.id);
-      const categoryIds = body.categories.map(category => category.id);
+      const tagIds = tags.map(tag => tag.id);
+      const categoryIds = categories.map(category => category.id);
       const bulkUpdateOps = [];
 
       items.forEach(item => {
@@ -85,4 +85,4 @@ exports.getFinalFieldsForList = fields => {
   });
 
   return finalFields;
-}
+};

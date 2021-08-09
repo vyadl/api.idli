@@ -30,6 +30,7 @@ const verifyToken = (req, res, next) => {
     }
 
     req.userId = decoded.id;
+
     next();
   });
 };
@@ -69,6 +70,7 @@ const isAdmin = (req, res, next) => {
 
         if (isAdmin) {
           next();
+
           return;
         }
 

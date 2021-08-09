@@ -1,11 +1,9 @@
-const config = require('../config/auth.config');
 const db = require('../models');
 const User = db.user;
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 const List = require('./../models/list.model');
 const Item = require('./../models/item.model');
 const { resolve500Error } = require('./../middlewares/validation');
+const VALID_KEYS_FOR_UPDATE = ['text', 'details', 'tags', 'category'];
 
 
 exports.getItem = (req, res) => {
@@ -41,25 +39,26 @@ exports.getItem = (req, res) => {
 };
 
 exports.addItem = (req, res) => {
-  const body = req.body;
+  const { text, details, tags, category } = req.body;
+  const { listid: listId } = req.params;
 
-  if (!body.text) {
+  if (!text) {
     res.status(400).send({ message: 'Text is required' });
   }
 
-  if (!req.params.listid) {
+  if (!listId) {
     res.status(400).send({ message: 'List ID is required' });
   }
 
   const item = new Item({
-    listId: req.params.listid,
-    text: req.body.text,
-    details: req.body.details,
-    tags: req.body.tags || [],
-    categories: req.body.categories || [],
+    listId,
+    text: text,
+    details: details || '',
+    tags: tags || [],
+    category: category || 0,
   });
 
-  List.findById(req.params.listid).exec((err, list) => {
+  List.findById(listId).exec((err, list) => {
     list.items.push(item);
 
     item.save(err => {
@@ -75,21 +74,24 @@ exports.addItem = (req, res) => {
 }
 
 exports.updateItem = (req, res) => {
-  List.findById(req.params.listid, (err, list) => {
+  const { tags, category } = req.body;
 
-    if (req.body.tags?.length || req.body.category) {
-      if (req.body.tags?.length) {
-        if (req.body.tags.some(tag => !list.tags.some(listTag => listTag.id === +tag))) {
+  List.findById(req.params.listid, (err, list) => {
+    if (tags?.length || category) {
+      if (tags?.length) {
+        if (tags.some(tag => !list.tags.some(listTag => listTag.id === +tag))) {
           return res.status(400).send({ message: 'There is no such tag in this list' });
         }
-      } else if (!list.categories.some(category => category.id === +req.body.category)) {
+      } else if (!list.categories.some(category => category.id === +category)) {
         return res.status(400).send({ message: 'There is no such category in this list' });
       }
     }
 
     Item.findById(req.params.id, (err, item) => {
       Object.keys(req.body).forEach(field => {
-        item[field] = req.body[field];
+        if (VALID_KEYS_FOR_UPDATE.includes(field)) {
+          item[field] = req.body[field];
+        }
       });
   
       item.save((err, updatedItem) => {

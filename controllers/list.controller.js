@@ -1,10 +1,5 @@
-const { validationResult } = require('express-validator');
-const config = require('../config/auth.config');
 const db = require('../models');
 const User = db.user;
-const Role = db.role;
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 const List = require('../models/list.model');
 const Item = require('../models/item.model');
 const { resolve500Error } = require('./../middlewares/validation');
@@ -48,9 +43,7 @@ exports.getPublicListsByUserId = (req, res) => {
 }
 
 exports.getList = (req, res) => {
-  const listId = req.params.id;
-
-  List.findById(listId)
+  List.findById(req.params.id)
     .populate('items', '-__v')
     .exec((err, list) => {
       resolve500Error(err, req, res);
@@ -62,10 +55,8 @@ exports.getList = (req, res) => {
       if (!list.isPrivate) {
         res.status(200).send(list.listToClientPopulated());
       } else {
-        if (!req.userId) {
+        if (!req.userId || req.userId !== list.userId) {
           res.status(400).send({ message: 'List is private' });
-        } else if (req.userId !== list.userId) {
-          return res.status(400).send({ message: 'List is private 2' });
         } else {
           return res.status(200).send(list.listToClientPopulated());
         }
@@ -74,19 +65,20 @@ exports.getList = (req, res) => {
 }
 
 exports.addList = (req, res) => {
+  const { tags: reqTags, categories: reqCategories, name, isPrivate } = req.body;
   let tags = [];
   let categories = [];
 
-  if (req.body.tags?.length) {
-    tags = req.body.tags.map((tag, i) => {
-      tag.id = String(i);
+  if (reqTags?.length) {
+    tags = reqTags.map((tag, i) => {
+      tag.id = i;
 
       return tag;
     });
   }
 
-  if (req.body.categories?.length) {
-    categories = req.body.categories.map((category, i) => {
+  if (reqCategories?.length) {
+    categories = reqCategories.map((category, i) => {
       category.id = i;
 
       return category;
@@ -95,9 +87,9 @@ exports.addList = (req, res) => {
 
   const list = new List({
     userId: req.userId,
-    name: req.body.name,
-    isPrivate: req.body.isPrivate || false,
+    isPrivate: isPrivate || false,
     items: [],
+    name,
     tags,
     categories,
   });
@@ -123,18 +115,19 @@ exports.updateList = (req, res) => {
     list.save((err, updatedList) => {
       resolve500Error(err, req, res);
 
-      removeDeletedTagsAndCategoriesFromItems({ list: oldList, req, res }).then(() => {
-        List
-            .findById(updatedList._id)
-            .populate('items')
-            .exec((err, populatedList) => {
-              resolve500Error(err, req, res);
+      removeDeletedTagsAndCategoriesFromItems({ list: oldList, req, res })
+        .then(() => {
+          List
+              .findById(updatedList._id)
+              .populate('items')
+              .exec((err, populatedList) => {
+                resolve500Error(err, req, res);
 
-              return res.status(200).send(populatedList.listToClientPopulated());
-            });
-      }).catch(err => {
-        resolve500Error(err, req, res);
-      });
+                return res.status(200).send(populatedList.listToClientPopulated());
+              });
+        }).catch(err => {
+          resolve500Error(err, req, res);
+        });
     });
   });
 };
@@ -152,4 +145,4 @@ exports.deleteList = (req, res) => {
         })
       });
     });
-}
+};

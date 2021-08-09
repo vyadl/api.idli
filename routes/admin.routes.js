@@ -1,5 +1,4 @@
-const { authJwt, validation } = require('./../middlewares');
-const { verifySignUp } = require('./../middlewares');
+const { authJwt } = require('./../middlewares');
 const controller = require('../controllers/admin.controller');
 
 module.exports = function(app) {
@@ -28,4 +27,4 @@ module.exports = function(app) {
     ],
     controller.softDeleteUser,
   );
-}
+};

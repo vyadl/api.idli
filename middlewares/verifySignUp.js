@@ -1,4 +1,3 @@
-const { rawListeners } = require('../models/role.model');
 const db = require('../models');
 const ROLES = db.ROLES;
 const User = db.user;
