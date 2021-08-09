@@ -27,7 +27,7 @@ const checkDuplicationUsernameOrEmail = (req, res, next) => {
   });
 };
 
-const checkRolesExisted = (req, res, next) => {
+const checkIsEveryRoleExisted = (req, res, next) => {
   if (req.body.roles) {
     const roles = JSON.parse(req.body.roles);
 
@@ -45,7 +45,7 @@ const checkRolesExisted = (req, res, next) => {
 
 const verifySignUp = {
   checkDuplicationUsernameOrEmail,
-  checkRolesExisted,
+  checkIsEveryRoleExisted,
 }
 
 module.exports = verifySignUp;

@@ -5,7 +5,7 @@ const Item = require('../models/item.model');
 const { resolve500Error } = require('./../middlewares/validation');
 const {
   removeDeletedTagsAndCategoriesFromItems,
-  getFinalFieldsForList,
+  getFieldsWithIds,
 } = require('./listActions/list.actions');
 
 exports.getListsForCurrentUser = (req, res) => {
@@ -65,7 +65,12 @@ exports.getList = (req, res) => {
 }
 
 exports.addList = (req, res) => {
-  const { tags: reqTags, categories: reqCategories, name, isPrivate } = req.body;
+  const {
+    tags: reqTags,
+    categories: reqCategories,
+    name,
+    isPrivate,
+  } = req.body;
   let tags = [];
   let categories = [];
 
@@ -106,10 +111,10 @@ exports.updateList = (req, res) => {
     resolve500Error(err, req, res);
   
     const oldList = JSON.parse(JSON.stringify(list));
-    const finalFieldsForList = getFinalFieldsForList(req.body);
+    const fieldsWithIds = getFieldsWithIds(req.body);
 
-    Object.keys(finalFieldsForList).forEach((field) => {
-      list[field] = finalFieldsForList[field];
+    Object.keys(fieldsWithIds).forEach((field) => {
+      list[field] = fieldsWithIds[field];
     });
     
     list.save((err, updatedList) => {

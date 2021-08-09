@@ -14,7 +14,7 @@ exports.toClient = function() {
   delete obj.__v;
 
   return obj;
-}
+};
 
 exports.listToClientPopulated = function() {
   const obj = this.toObject();
@@ -26,4 +26,4 @@ exports.listToClientPopulated = function() {
   delete obj.__v;
 
   return obj;
-}
+};

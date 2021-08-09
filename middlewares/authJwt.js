@@ -5,18 +5,6 @@ const User = db.user;
 const Role = db.role;
 const { resolve500Error } = require('./../middlewares/validation');
 
-const isAvailable = (req, res, next) => {
-  User.findById(req.userId).exec((err, user) => {
-    resolve500Error(err, req, res);
-
-    if (user.isDeleted) {
-      return res.status(410).send({ message: 'The user is not available' });
-    }
-
-    next();
-  });
-}
-
 const verifyToken = (req, res, next) => {
   const token = req.headers['x-access-token'];
 
@@ -56,9 +44,7 @@ const isAdmin = (req, res, next) => {
     }
 
     Role.find(
-      {
-        _id: { $in: user.roles }
-      },
+      { _id: { $in: user.roles } },
       (err, roles) => {
         if (err) {
           return res.status(500).send({ message: err });
