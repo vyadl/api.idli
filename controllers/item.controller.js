@@ -154,15 +154,14 @@ exports.getDeletedItems = (req, res) => {
     .populate('items', '-__v')
     .exec((err, lists) => {
       resolve500Error(err, req, res);
+      const listsFormattedForClient = lists
+        .map(list => list.listToClientPopulated(true));
+      const allUserItems = listsFormattedForClient.reduce((result, list) => {
+          return [...result, ...list.items]
+        }, []);
+      const deletedItems = allUserItems.filter(item => item.isDeleted);
 
-      const finalItems = lists
-        .map(list => list.listToClientPopulated())
-        .reduce((result, list) => {
-          result = [...result, ...list.items];
-        }, [])
-        .filter(item => item.isDeleted);
-
-        res.status(200).send(finalItems);
+      res.status(200).send(deletedItems);
     }
   );
 };

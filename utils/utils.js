@@ -16,11 +16,15 @@ exports.toClient = function() {
   return obj;
 };
 
-exports.listToClientPopulated = function() {
+exports.listToClientPopulated = function(isDeletedInclude = false) {
   const obj = this.toObject();
 
   obj.id = obj._id;
-  obj.items = this.items.filter(item => !item.isDeleted).map(item => item.toClient());
+  obj.items = this.items.map(item => item.toClient());
+
+  if (isDeletedInclude) {
+    obj.items.filter(item => !item.isDeleted);
+  }
 
   delete obj._id;
   delete obj.__v;
