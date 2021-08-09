@@ -7,6 +7,7 @@ const schema = new mongoose.Schema({
   details: String,
   tags: Array,
   category: Number,
+  isDeleted: Boolean,
 })
 
 schema.method('toClient', toClient);

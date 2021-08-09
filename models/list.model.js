@@ -5,6 +5,7 @@ const schema = new mongoose.Schema({
   userId: String,
   name: String,
   isPrivate: Boolean,
+  isDeleted: Boolean,
   tags: Array,
   categories: Array,
   items: [

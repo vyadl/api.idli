@@ -9,14 +9,16 @@ const {
 } = require('./listActions/list.actions');
 
 exports.getListsForCurrentUser = (req, res) => {
-  List.find({ userId: req.userId })
-    .exec((err, lists) => {
-      resolve500Error(err, req, res);
+  List.find({
+    userId: req.userId,
+    isDeleted: false,
+  }).exec((err, lists) => {
+    resolve500Error(err, req, res);
 
-      finalLists = lists.map(list => list.toClient());
+    const finalLists = lists.map(list => list.toClient());
 
-      res.status(200).send(finalLists);
-    });
+    res.status(200).send(finalLists);
+  });
 }
 
 exports.getPublicListsByUserId = (req, res) => {
@@ -32,10 +34,11 @@ exports.getPublicListsByUserId = (req, res) => {
     List.find({
       userId: req.params.userid,
       isPrivate: false,
+      isDeleted: false,
     }, (err, lists) => {
       resolve500Error(err, req, res);
 
-      finalLists = lists.map(list => list.toClient());
+      const finalLists = lists.map(list => list.toClient());
 
       res.status(200).send(finalLists);
     });
@@ -50,6 +53,10 @@ exports.getList = (req, res) => {
 
       if (!list) {
         return res.status(404).send({ message: 'List doesn\'t exist' });
+      }
+
+      if (list.isDeleted) {
+        return res.status(410).send({ message: 'The list is deleted' });
       }
 
       if (!list.isPrivate) {
@@ -88,6 +95,7 @@ exports.addList = (req, res) => {
   const list = new List({
     userId: req.userId,
     isPrivate: isPrivate || false,
+    isDeleted: false,
     items: [],
     name,
     tags,
@@ -104,6 +112,10 @@ exports.addList = (req, res) => {
 exports.updateList = (req, res) => {
   List.findById(req.params.listid).exec((err, list) => {
     resolve500Error(err, req, res);
+
+    if (list.isDeleted) {
+      return res.status(410).send({ message: 'The list is deleted' });
+    }
   
     const oldList = JSON.parse(JSON.stringify(list));
     const finalFieldsForList = getFinalFieldsForList(req.body);
@@ -132,7 +144,51 @@ exports.updateList = (req, res) => {
   });
 };
 
-exports.deleteList = (req, res) => {
+exports.softDeleteList = (req, res) => {
+  List.findById(req.params.listid)
+    .exec((err, list) => {
+      resolve500Error(err, req, res);
+
+      list.isDeleted = true;
+
+      list.save(err => {
+        resolve500Error(err, req, res);
+
+        res.status(200).send({ message: 'The list is successfully deleted' });
+      })
+    });
+};
+
+exports.restoreList = (req, res) => {
+  List.findById(req.params.listid)
+    .exec((err, list) => {
+      resolve500Error(err, req, res);
+
+      list.isDeleted = false;
+
+      list.save(err => {
+        resolve500Error(err, req, res);
+
+        res.status(200).send({ message: 'The list is successfully restored' });
+      })
+    });
+};
+
+exports.getDeletedLists = (req, res) => {
+  List.find({
+    userId: req.userId,
+    isDeleted: true,
+  })
+    .exec((err, lists) => {
+      resolve500Error(err, req, res);
+
+      const finalLists = lists.map(list => list.toClient());
+
+      res.status(200).send(finalLists);
+    });
+};
+
+exports.hardDeleteList = (req, res) => {
   List.findById(req.params.listid)
     .exec((err, list) => {
       resolve500Error(err, req, res);

@@ -25,6 +25,10 @@ exports.getItem = (req, res) => {
         return res.status(410).send({ message: 'This list is private' });
       }
 
+      if (item.isDeleted) {
+        return res.status(410).send({ message: 'This item is deleted' });
+      }
+
       Item.findById(req.params.id, (err, item) => {
         resolve500Error(err, req, res);
 
@@ -56,6 +60,7 @@ exports.addItem = (req, res) => {
     details: details || '',
     tags: tags || [],
     category: category || 0,
+    isDeleted: false,
   });
 
   List.findById(listId).exec((err, list) => {
@@ -71,7 +76,7 @@ exports.addItem = (req, res) => {
       });
     });
   });
-}
+};
 
 exports.updateItem = (req, res) => {
   const { tags, category } = req.body;
@@ -101,9 +106,64 @@ exports.updateItem = (req, res) => {
       });
     });
   });
-}
+};
 
-exports.deleteItem = (req, res) => {
+
+exports.softDeleteItem = (req, res) => {
+  Item.findById(req.params.id)
+    .exec((err, item) => {
+      resolve500Error(err, req, res);
+
+      item.isDeleted = true;
+
+      item.save(err => {
+        resolve500Error(err, req, res);
+
+        res.status(200).send({ message: 'The item is successfully deleted' });
+      })
+    });
+};
+
+exports.restoreItem = (req, res) => {
+  List.findById(req.params.listid)
+    .exec((err, list) => {
+      Item.findById(req.params.id)
+        .exec((err, item) => {
+          resolve500Error(err, req, res);
+
+          item.isDeleted = false;
+
+          item.save(err => {
+            resolve500Error(err, req, res);
+
+            res.status(200).send({
+              message: 'The item is successfully restored',
+              isListDeleted: list.isDeleted,
+            });
+          })
+        });
+  });
+};
+
+exports.getDeletedItems = (req, res) => {
+  List.find({ userId: req.userId })
+    .populate('items', '-__v')
+    .exec((err, lists) => {
+      resolve500Error(err, req, res);
+
+      const finalItems = lists
+        .map(list => list.listToClientPopulated())
+        .reduce((result, list) => {
+          result = [...result, ...list.items];
+        }, [])
+        .filter(item => item.isDeleted);
+
+        res.status(200).send(finalItems);
+    }
+  );
+};
+
+exports.hardDeleteItem = (req, res) => {
   Item.findByIdAndDelete(req.params.id).exec((err, result) => {
     resolve500Error(err, req, res);
 
@@ -122,4 +182,4 @@ exports.deleteItem = (req, res) => {
       });
     });
   });
-}
+};
