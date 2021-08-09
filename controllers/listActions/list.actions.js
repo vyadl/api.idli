@@ -59,8 +59,8 @@ exports.removeDeletedTagsAndCategoriesFromItems = ({ req, res, list }) => {
   }
 };
 
-exports.getFinalFieldsForList = fields => {
-  const finalFields = {};
+exports.getFieldsWithIds = fields => {
+  const updatedFields = {};
 
   Object.keys(fields).forEach(field => {
     let resultField = JSON.parse(JSON.stringify(fields[field]));
@@ -81,8 +81,8 @@ exports.getFinalFieldsForList = fields => {
       });
     }
 
-    finalFields[field] = resultField;
+    updatedFields[field] = resultField;
   });
 
-  return finalFields;
+  return updatedFields;
 };

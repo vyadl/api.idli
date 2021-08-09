@@ -93,6 +93,10 @@ exports.updateItem = (req, res) => {
     }
 
     Item.findById(req.params.id, (err, item) => {
+      if (!item) {
+        return res.status(410).send({ message: 'The item doesn\'t exist' });
+      }
+
       Object.keys(req.body).forEach(field => {
         if (VALID_KEYS_FOR_UPDATE.includes(field)) {
           item[field] = req.body[field];
@@ -172,7 +176,7 @@ exports.hardDeleteItem = (req, res) => {
     }
 
     List.findById(req.params.listid).exec((err, list) => {
-      list.items = list.items.filter(id => String(id) !== String(req.params.id));
+      list.items = list.items.filter(id => String(id) !== req.params.id);
 
 
       list.save((err, list) => {
