@@ -5,9 +5,11 @@ const schema = new mongoose.Schema({
   userId: String,
   name: String,
   isPrivate: Boolean,
-  isDeleted: Boolean,
   tags: Array,
   categories: Array,
+  createdAt: Date,
+  updatedAt: Date,
+  deletedAt: Date,
   items: [
     {
       type: 'ObjectId',

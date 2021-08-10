@@ -70,6 +70,15 @@ module.exports = function(app) {
     controller.softDeleteList,
   );
 
+  app.delete(
+    '/api/list/hard-delete/:listid',
+    [
+      authJwt.verifyToken,
+      verifyList.isListBelongToUser,
+    ],
+    controller.hardDeleteList,
+  );
+
   app.post(
     '/api/list/restore/:listid',
     [

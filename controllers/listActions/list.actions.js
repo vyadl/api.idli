@@ -40,7 +40,7 @@ exports.removeDeletedTagsAndCategoriesFromItems = ({ req, res, list }) => {
                 filter: { _id: item._id },
                 update: {
                   $set: {
-                    category: 0,
+                    category: null,
                   },
                 },
               },

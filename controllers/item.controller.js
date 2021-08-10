@@ -10,6 +10,10 @@ exports.getItem = (req, res) => {
   List.findById(req.params.listid, (err, list) => {
     resolve500Error(err, req, res);
 
+    if (!list) {
+      return res.status(410).send({ message: 'This list doen\'t exist' });
+    }
+
     User.findById(list.userId, (err, user) => {
       resolve500Error(err, req, res);
 
@@ -17,7 +21,7 @@ exports.getItem = (req, res) => {
         return res.status(410).send({ message: 'User was not found' });
       }
   
-      if (user.isDeleted) {
+      if (user.deletedAt) {
         return res.status(410).send({ message: 'User was deleted' });
       }
 
@@ -25,15 +29,15 @@ exports.getItem = (req, res) => {
         return res.status(410).send({ message: 'This list is private' });
       }
 
-      if (item.isDeleted) {
-        return res.status(410).send({ message: 'This item is deleted' });
-      }
-
       Item.findById(req.params.id, (err, item) => {
         resolve500Error(err, req, res);
 
         if (!item) {
           return res.status(410).send({ message: 'The item doesn\'t exist' });
+        }
+
+        if (item.deletedAt) {
+          return res.status(410).send({ message: 'This item is deleted' });
         }
 
         res.status(200).send(item.toClient());
@@ -54,13 +58,16 @@ exports.addItem = (req, res) => {
     res.status(400).send({ message: 'List ID is required' });
   }
 
+  const now = new Date();
   const item = new Item({
     listId,
     text: text,
     details: details || '',
     tags: tags || [],
-    category: category || 0,
-    isDeleted: false,
+    category: category || null,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
   });
 
   List.findById(listId).exec((err, list) => {
@@ -103,6 +110,7 @@ exports.updateItem = (req, res) => {
         }
       });
   
+      item.updatedAt = new Date();
       item.save((err, updatedItem) => {
         resolve500Error(err, req, res);
   
@@ -118,7 +126,11 @@ exports.softDeleteItem = (req, res) => {
     .exec((err, item) => {
       resolve500Error(err, req, res);
 
-      item.isDeleted = true;
+      if (item.deletedAt) {
+        return res.status(400).send({ message: 'The item is already deleted' });
+      }
+
+      item.deletedAt = new Date();
 
       item.save(err => {
         resolve500Error(err, req, res);
@@ -135,14 +147,14 @@ exports.restoreItem = (req, res) => {
         .exec((err, item) => {
           resolve500Error(err, req, res);
 
-          item.isDeleted = false;
+          item.deletedAt = null;
 
           item.save(err => {
             resolve500Error(err, req, res);
 
             res.status(200).send({
               message: 'The item is successfully restored',
-              isListDeleted: list.isDeleted,
+              isListDeleted: !!list.deletedAt,
             });
           })
         });
@@ -159,7 +171,7 @@ exports.getDeletedItems = (req, res) => {
       const allUserItems = listsFormattedForClient.reduce((result, list) => {
           return [...result, ...list.items]
         }, []);
-      const deletedItems = allUserItems.filter(item => item.isDeleted);
+      const deletedItems = allUserItems.filter(item => item.deletedAt);
 
       res.status(200).send(deletedItems);
     }

@@ -7,11 +7,12 @@ const {
   removeDeletedTagsAndCategoriesFromItems,
   getFieldsWithIds,
 } = require('./listActions/list.actions');
+const { now } = require('mongoose');
 
 exports.getListsForCurrentUser = (req, res) => {
   List.find({
     userId: req.userId,
-    isDeleted: false,
+    deletedAd: null,
   }).exec((err, lists) => {
     resolve500Error(err, req, res);
 
@@ -27,14 +28,14 @@ exports.getPublicListsByUserId = (req, res) => {
       return res.status(410).send({ message: 'User was not found' });
     }
 
-    if (user.isDeleted) {
+    if (user.deletedAt) {
       return res.status(410).send({ message: 'User was deleted' });
     }
 
     List.find({
       userId: req.params.userid,
       isPrivate: false,
-      isDeleted: false,
+      deletedAt: null,
     }, (err, lists) => {
       resolve500Error(err, req, res);
 
@@ -55,7 +56,7 @@ exports.getList = (req, res) => {
         return res.status(404).send({ message: 'List doesn\'t exist' });
       }
 
-      if (list.isDeleted) {
+      if (list.deletedAt) {
         return res.status(410).send({ message: 'The list is deleted' });
       }
 
@@ -78,6 +79,7 @@ exports.addList = (req, res) => {
     name,
     isPrivate,
   } = req.body;
+  const now = new Date();
   let tags = [];
   let categories = [];
 
@@ -100,7 +102,9 @@ exports.addList = (req, res) => {
   const list = new List({
     userId: req.userId,
     isPrivate: isPrivate || false,
-    isDeleted: false,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
     items: [],
     name,
     tags,
@@ -118,7 +122,7 @@ exports.updateList = (req, res) => {
   List.findById(req.params.listid).exec((err, list) => {
     resolve500Error(err, req, res);
 
-    if (list.isDeleted) {
+    if (list.deletedAt) {
       return res.status(410).send({ message: 'The list is deleted' });
     }
   
@@ -128,6 +132,7 @@ exports.updateList = (req, res) => {
     Object.keys(fieldsWithIds).forEach((field) => {
       list[field] = fieldsWithIds[field];
     });
+    list.updatedAt = new Date();
     
     list.save((err, updatedList) => {
       resolve500Error(err, req, res);
@@ -154,7 +159,7 @@ exports.softDeleteList = (req, res) => {
     .exec((err, list) => {
       resolve500Error(err, req, res);
 
-      list.isDeleted = true;
+      list.deletedAt = new Date();
 
       list.save(err => {
         resolve500Error(err, req, res);
@@ -169,7 +174,7 @@ exports.restoreList = (req, res) => {
     .exec((err, list) => {
       resolve500Error(err, req, res);
 
-      list.isDeleted = false;
+      list.deletedAt = null;
 
       list.save(err => {
         resolve500Error(err, req, res);
@@ -182,7 +187,7 @@ exports.restoreList = (req, res) => {
 exports.getDeletedLists = (req, res) => {
   List.find({
     userId: req.userId,
-    isDeleted: true,
+    deletedAt: { $ne: null },
   })
     .exec((err, lists) => {
       resolve500Error(err, req, res);

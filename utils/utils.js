@@ -23,7 +23,7 @@ exports.listToClientPopulated = function(isDeletedInclude = false) {
   obj.items = this.items.map(item => item.toClient());
 
   if (isDeletedInclude) {
-    obj.items.filter(item => !item.isDeleted);
+    obj.items.filter(item => !item.deletedAt);
   }
 
   delete obj._id;

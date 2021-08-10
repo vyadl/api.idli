@@ -37,7 +37,7 @@ exports.softDeleteUser = (req, res) => {
       return res.status(400).send({ message: `User with id ${id} does not exist` });
     }
 
-    user.isDeleted = true;
+    user.deletedAt = new Date();
 
     user.save(err => {
       resolve500Error(err, req, res);
