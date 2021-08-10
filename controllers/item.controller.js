@@ -10,6 +10,10 @@ exports.getItem = (req, res) => {
   List.findById(req.params.listid, (err, list) => {
     resolve500Error(err, req, res);
 
+    if (!list) {
+      return res.status(410).send({ message: 'This list doen\'t exist' });
+    }
+
     User.findById(list.userId, (err, user) => {
       resolve500Error(err, req, res);
 
@@ -17,7 +21,7 @@ exports.getItem = (req, res) => {
         return res.status(410).send({ message: 'User was not found' });
       }
   
-      if (user.isDeleted) {
+      if (user.deletedAt) {
         return res.status(410).send({ message: 'User was deleted' });
       }
 
@@ -30,6 +34,10 @@ exports.getItem = (req, res) => {
 
         if (!item) {
           return res.status(410).send({ message: 'The item doesn\'t exist' });
+        }
+
+        if (item.deletedAt) {
+          return res.status(410).send({ message: 'This item is deleted' });
         }
 
         res.status(200).send(item.toClient());
@@ -50,12 +58,16 @@ exports.addItem = (req, res) => {
     res.status(400).send({ message: 'List ID is required' });
   }
 
+  const now = new Date();
   const item = new Item({
     listId,
     text: text,
     details: details || '',
     tags: tags || [],
-    category: category || 0,
+    category: category || null,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
   });
 
   List.findById(listId).exec((err, list) => {
@@ -71,7 +83,42 @@ exports.addItem = (req, res) => {
       });
     });
   });
-}
+};
+
+exports.addManyItems = (req, res) => {
+  const { listid: listId } = req.params;
+  const { items } = req.body;
+  const now = new Date();
+  const preparedItems = items.map(({ text, details, tags, category }) => ({
+      listId,
+      text: text,
+      details: details || '',
+      tags: tags || [],
+      category: category || null,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    })
+  );
+
+  Item.insertMany(preparedItems, (err, addedItems) => {
+    resolve500Error(err, req, res);
+
+    List.findById(listId, (err, list) => {
+      resolve500Error(err, req, res);
+
+      addedItems.forEach(({ _id }) => {
+        list.items.push(_id);
+      });
+
+      list.save(err => {
+        resolve500Error(err, req, res);
+
+        res.status(200).send(addedItems.map(item => item.toClient()));
+      });
+    });
+  })
+};
 
 exports.updateItem = (req, res) => {
   const { tags, category } = req.body;
@@ -82,7 +129,7 @@ exports.updateItem = (req, res) => {
         if (tags.some(tag => !list.tags.some(listTag => listTag.id === +tag))) {
           return res.status(400).send({ message: 'There is no such tag in this list' });
         }
-      } else if (!list.categories.some(category => category.id === +category)) {
+      } else if (!list.categories.some(listCategory => listCategory.id === +category)) {
         return res.status(400).send({ message: 'There is no such category in this list' });
       }
     }
@@ -98,6 +145,7 @@ exports.updateItem = (req, res) => {
         }
       });
   
+      item.updatedAt = new Date();
       item.save((err, updatedItem) => {
         resolve500Error(err, req, res);
   
@@ -105,9 +153,68 @@ exports.updateItem = (req, res) => {
       });
     });
   });
-}
+};
 
-exports.deleteItem = (req, res) => {
+
+exports.softDeleteItem = (req, res) => {
+  Item.findById(req.params.id)
+    .exec((err, item) => {
+      resolve500Error(err, req, res);
+
+      if (item.deletedAt) {
+        return res.status(400).send({ message: 'The item is already deleted' });
+      }
+
+      item.deletedAt = new Date();
+
+      item.save(err => {
+        resolve500Error(err, req, res);
+
+        res.status(200).send({ message: 'The item is successfully deleted' });
+      })
+    });
+};
+
+exports.restoreItem = (req, res) => {
+  List.findById(req.params.listid)
+    .exec((err, list) => {
+      Item.findById(req.params.id)
+        .exec((err, item) => {
+          resolve500Error(err, req, res);
+
+          item.deletedAt = null;
+
+          item.save(err => {
+            resolve500Error(err, req, res);
+
+            res.status(200).send({
+              message: 'The item is successfully restored',
+              isListDeleted: !!list.deletedAt,
+            });
+          })
+        });
+  });
+};
+
+exports.getDeletedItems = (req, res) => {
+  List.find({ userId: req.userId })
+    .populate('items', '-__v')
+    .exec((err, lists) => {
+      resolve500Error(err, req, res);
+
+      const listsFormattedForClient = lists
+        .map(list => list.listToClientPopulated(true));
+      const allUserItems = listsFormattedForClient.reduce((result, list) => {
+          return [...result, ...list.items]
+        }, []);
+      const deletedItems = allUserItems.filter(item => item.deletedAt);
+
+      res.status(200).send(deletedItems);
+    }
+  );
+};
+
+exports.hardDeleteItem = (req, res) => {
   Item.findByIdAndDelete(req.params.id).exec((err, result) => {
     resolve500Error(err, req, res);
 
@@ -126,4 +233,4 @@ exports.deleteItem = (req, res) => {
       });
     });
   });
-}
+};

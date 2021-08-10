@@ -1,5 +1,5 @@
 const { body, param, oneOf } = require('express-validator');
-const { authJwt, verifyListUpdate, validation } = require('./../middlewares');
+const { authJwt, verifyList, validation } = require('./../middlewares');
 const controller = require('./../controllers/list.controller');
 
 module.exports = function(app) {
@@ -13,7 +13,12 @@ module.exports = function(app) {
 
   app.get('/api/lists', [authJwt.verifyToken], controller.getListsForCurrentUser);
 
-  app.get('/api/list/:id', [authJwt.getUserId], controller.getList);
+  app.get('/api/list/:id', [
+      authJwt.getUserId,
+      verifyList.isListExist,
+    ],
+    controller.getList,
+  );
 
   app.get('/api/user/lists/:userid', [
       param('userid').isString(),
@@ -49,7 +54,8 @@ module.exports = function(app) {
       ], 'At least one field to change is required (name, isPrivate, tags, categories, name)'),
       validation.verifyBasicValidation,
       authJwt.verifyToken,
-      verifyListUpdate.isListBelongToUser,
+      verifyList.isListBelongToUser,
+      verifyList.isListExist,
     ],
     controller.updateList,
   );
@@ -58,8 +64,44 @@ module.exports = function(app) {
     '/api/list/delete/:listid',
     [
       authJwt.verifyToken,
-      verifyListUpdate.isListBelongToUser,
+      verifyList.isListBelongToUser,
+      verifyList.isListExist,
     ],
-    controller.deleteList,
+    controller.softDeleteList,
+  );
+
+  app.delete(
+    '/api/list/hard-delete/:listid',
+    [
+      authJwt.verifyToken,
+      verifyList.isListBelongToUser,
+    ],
+    controller.hardDeleteList,
+  );
+
+  app.post(
+    '/api/list/restore/:listid',
+    [
+      authJwt.verifyToken,
+      verifyList.isListBelongToUser,
+    ],
+    controller.restoreList,
+  );
+
+  app.get(
+    '/api/lists/deleted',
+    [
+      authJwt.verifyToken,
+    ],
+    controller.getDeletedLists,
+  );
+
+  app.delete(
+    '/api/list/hard-delete/:listid',
+    [
+      authJwt.verifyToken,
+      verifyList.isListBelongToUser,
+    ],
+    controller.hardDeleteList,
   );
 };

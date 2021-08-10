@@ -7,6 +7,9 @@ const schema = new mongoose.Schema({
   isPrivate: Boolean,
   tags: Array,
   categories: Array,
+  createdAt: Date,
+  updatedAt: Date,
+  deletedAt: Date,
   items: [
     {
       type: 'ObjectId',

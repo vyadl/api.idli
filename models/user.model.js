@@ -6,7 +6,9 @@ module.exports = mongoose.model(
     username: String,
     email: String,
     password: String,
-    isDeleted: Boolean,
+    createdAt: Date,
+    updatedAt: Date,
+    deletedAt: Date,
     roles: [
       {
         type: mongoose.Schema.Types.ObjectId,

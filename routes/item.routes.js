@@ -1,5 +1,5 @@
 const { body, param, oneOf } = require('express-validator');
-const { authJwt, verifyListUpdate, validation } = require('./../middlewares');
+const { authJwt, verifyList, validation } = require('./../middlewares');
 const controller = require('./../controllers/item.controller');
 
 module.exports = function(app) {
@@ -28,9 +28,23 @@ module.exports = function(app) {
     validation.verifyBasicValidation,
     [
       authJwt.verifyToken,
-      verifyListUpdate.isListBelongToUser,
+      verifyList.isListBelongToUser,
+      verifyList.isListExist,
     ],
     controller.addItem,
+  );
+
+  app.post(
+    '/api/items/add-many/:listid',
+    // here "-many" was added for easier recognizing and preventing confusing
+    // body('items').exists().isArray(),
+    validation.verifyBasicValidation,
+    [
+      authJwt.verifyToken,
+      verifyList.isListBelongToUser,
+      verifyList.isListExist,
+    ],
+    controller.addManyItems,
   );
 
   app.patch(
@@ -48,7 +62,8 @@ module.exports = function(app) {
       ], 'At least one field to change is required (text, details, category, tags)'),
       validation.verifyBasicValidation,
       authJwt.verifyToken,
-      verifyListUpdate.isListBelongToUser,
+      verifyList.isListBelongToUser,
+      verifyList.isListExist,
     ],
     controller.updateItem,
   );
@@ -57,8 +72,33 @@ module.exports = function(app) {
     '/api/item/delete/:listid/:id',
     [
       authJwt.verifyToken,
-      verifyListUpdate.isListBelongToUser,
+      verifyList.isListBelongToUser,
+      verifyList.isListExist,
     ],
-    controller.deleteItem,
+    controller.softDeleteItem,
+  );
+
+  app.post(
+    '/api/item/restore/:listid/:id',
+    [
+      authJwt.verifyToken,
+      verifyList.isListBelongToUser,
+    ],
+    controller.restoreItem,
+  );
+
+  app.get(
+    '/api/items/deleted',
+    [authJwt.verifyToken],
+    controller.getDeletedItems,
+  );
+
+  app.delete(
+    '/api/item/delete/:listid/:id',
+    [
+      authJwt.verifyToken,
+      verifyList.isListBelongToUser,
+    ],
+    controller.hardDeleteItem,
   );
 };

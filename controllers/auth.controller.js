@@ -7,10 +7,14 @@ const bcrypt = require('bcryptjs');
 const { resolve500Error } = require('./../middlewares/validation');
 
 exports.signup = (req, res) => {
+  const now = new Date();
   const user = new User({
     username: req.body.username,
     email: req.body.email,
     password: bcrypt.hashSync(req.body.password, 8),
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
   });
 
   user.save((err, user) => {
@@ -68,7 +72,7 @@ exports.signin = (req, res) => {
         user.password,
       );
       
-      if (user.isDeleted) {
+      if (user.deletedAt) {
         return res.status(410).send({
           accessToken: null,
           message: 'User was deleted',

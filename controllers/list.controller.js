@@ -9,14 +9,16 @@ const {
 } = require('./listActions/list.actions');
 
 exports.getListsForCurrentUser = (req, res) => {
-  List.find({ userId: req.userId })
-    .exec((err, lists) => {
-      resolve500Error(err, req, res);
+  List.find({
+    userId: req.userId,
+    deletedAt: null,
+  }).exec((err, lists) => {
+    resolve500Error(err, req, res);
 
-      finalLists = lists.map(list => list.toClient());
+    const finalLists = lists.map(list => list.toClient());
 
-      res.status(200).send(finalLists);
-    });
+    res.status(200).send(finalLists);
+  });
 }
 
 exports.getPublicListsByUserId = (req, res) => {
@@ -25,17 +27,18 @@ exports.getPublicListsByUserId = (req, res) => {
       return res.status(410).send({ message: 'User was not found' });
     }
 
-    if (user.isDeleted) {
+    if (user.deletedAt) {
       return res.status(410).send({ message: 'User was deleted' });
     }
 
     List.find({
       userId: req.params.userid,
       isPrivate: false,
+      deletedAt: null,
     }, (err, lists) => {
       resolve500Error(err, req, res);
 
-      finalLists = lists.map(list => list.toClient());
+      const finalLists = lists.map(list => list.toClient());
 
       res.status(200).send(finalLists);
     });
@@ -50,6 +53,10 @@ exports.getList = (req, res) => {
 
       if (!list) {
         return res.status(404).send({ message: 'List doesn\'t exist' });
+      }
+
+      if (list.deletedAt) {
+        return res.status(410).send({ message: 'The list is deleted' });
       }
 
       if (!list.isPrivate) {
@@ -71,28 +78,36 @@ exports.addList = (req, res) => {
     name,
     isPrivate,
   } = req.body;
+  const now = new Date();
   let tags = [];
   let categories = [];
 
-  if (reqTags?.length) {
-    tags = reqTags.map((tag, i) => {
-      tag.id = i;
+  if (!(req.tags.length && req.tags[0].id === null)) {
+  // if ids for tags and categories are predefined (it happens with test-data)
+  // we don't go in this condition
+    if (reqTags?.length) {
+      tags = reqTags.map((tag, i) => {
+        tag.id = i;
 
-      return tag;
-    });
-  }
+        return tag;
+      });
+    }
 
-  if (reqCategories?.length) {
-    categories = reqCategories.map((category, i) => {
-      category.id = i;
+    if (reqCategories?.length) {
+      categories = reqCategories.map((category, i) => {
+        category.id = i;
 
-      return category;
-    });
+        return category;
+      });
+    }
   }
 
   const list = new List({
     userId: req.userId,
     isPrivate: isPrivate || false,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
     items: [],
     name,
     tags,
@@ -109,6 +124,10 @@ exports.addList = (req, res) => {
 exports.updateList = (req, res) => {
   List.findById(req.params.listid).exec((err, list) => {
     resolve500Error(err, req, res);
+
+    if (list.deletedAt) {
+      return res.status(410).send({ message: 'The list is deleted' });
+    }
   
     const oldList = JSON.parse(JSON.stringify(list));
     const fieldsWithIds = getFieldsWithIds(req.body);
@@ -116,6 +135,7 @@ exports.updateList = (req, res) => {
     Object.keys(fieldsWithIds).forEach((field) => {
       list[field] = fieldsWithIds[field];
     });
+    list.updatedAt = new Date();
     
     list.save((err, updatedList) => {
       resolve500Error(err, req, res);
@@ -137,7 +157,51 @@ exports.updateList = (req, res) => {
   });
 };
 
-exports.deleteList = (req, res) => {
+exports.softDeleteList = (req, res) => {
+  List.findById(req.params.listid)
+    .exec((err, list) => {
+      resolve500Error(err, req, res);
+
+      list.deletedAt = new Date();
+
+      list.save(err => {
+        resolve500Error(err, req, res);
+
+        res.status(200).send({ message: 'The list is successfully deleted' });
+      })
+    });
+};
+
+exports.restoreList = (req, res) => {
+  List.findById(req.params.listid)
+    .exec((err, list) => {
+      resolve500Error(err, req, res);
+
+      list.deletedAt = null;
+
+      list.save(err => {
+        resolve500Error(err, req, res);
+
+        res.status(200).send({ message: 'The list is successfully restored' });
+      })
+    });
+};
+
+exports.getDeletedLists = (req, res) => {
+  List.find({
+    userId: req.userId,
+    deletedAt: { $ne: null },
+  })
+    .exec((err, lists) => {
+      resolve500Error(err, req, res);
+
+      const finalLists = lists.map(list => list.toClient());
+
+      res.status(200).send(finalLists);
+    });
+};
+
+exports.hardDeleteList = (req, res) => {
   List.findById(req.params.listid)
     .exec((err, list) => {
       resolve500Error(err, req, res);
