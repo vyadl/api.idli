@@ -201,6 +201,7 @@ exports.getDeletedItems = (req, res) => {
     .populate('items', '-__v')
     .exec((err, lists) => {
       resolve500Error(err, req, res);
+
       const listsFormattedForClient = lists
         .map(list => list.listToClientPopulated(true));
       const allUserItems = listsFormattedForClient.reduce((result, list) => {

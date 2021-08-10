@@ -7,7 +7,6 @@ const {
   removeDeletedTagsAndCategoriesFromItems,
   getFieldsWithIds,
 } = require('./listActions/list.actions');
-const { now } = require('mongoose');
 
 exports.getListsForCurrentUser = (req, res) => {
   List.find({
