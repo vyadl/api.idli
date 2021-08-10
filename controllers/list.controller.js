@@ -11,7 +11,7 @@ const {
 exports.getListsForCurrentUser = (req, res) => {
   List.find({
     userId: req.userId,
-    deletedAd: null,
+    deletedAt: null,
   }).exec((err, lists) => {
     resolve500Error(err, req, res);
 
