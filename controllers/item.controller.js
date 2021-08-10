@@ -85,6 +85,41 @@ exports.addItem = (req, res) => {
   });
 };
 
+exports.addManyItems = (req, res) => {
+  const { listid: listId } = req.params;
+  const { items } = req.body;
+  const now = new Date();
+  const preparedItems = items.map(({ text, details, tags, category }) => ({
+      listId,
+      text: text,
+      details: details || '',
+      tags: tags || [],
+      category: category || null,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    })
+  );
+
+  Item.insertMany(preparedItems, (err, addedItems) => {
+    resolve500Error(err, req, res);
+
+    List.findById(listId, (err, list) => {
+      resolve500Error(err, req, res);
+
+      addedItems.forEach(({ _id }) => {
+        list.items.push(_id);
+      });
+
+      list.save(err => {
+        resolve500Error(err, req, res);
+
+        res.status(200).send(addedItems.map(item => item.toClient()));
+      });
+    });
+  })
+};
+
 exports.updateItem = (req, res) => {
   const { tags, category } = req.body;
 
@@ -94,7 +129,7 @@ exports.updateItem = (req, res) => {
         if (tags.some(tag => !list.tags.some(listTag => listTag.id === +tag))) {
           return res.status(400).send({ message: 'There is no such tag in this list' });
         }
-      } else if (!list.categories.some(category => category.id === +category)) {
+      } else if (!list.categories.some(listCategory => listCategory.id === +category)) {
         return res.status(400).send({ message: 'There is no such category in this list' });
       }
     }

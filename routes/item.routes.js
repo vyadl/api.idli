@@ -34,6 +34,19 @@ module.exports = function(app) {
     controller.addItem,
   );
 
+  app.post(
+    '/api/items/add-many/:listid',
+    // here "-many" was added for easier recognizing and preventing confusing
+    // body('items').exists().isArray(),
+    validation.verifyBasicValidation,
+    [
+      authJwt.verifyToken,
+      verifyList.isListBelongToUser,
+      verifyList.isListExist,
+    ],
+    controller.addManyItems,
+  );
+
   app.patch(
     '/api/item/update/:listid/:id',
     [

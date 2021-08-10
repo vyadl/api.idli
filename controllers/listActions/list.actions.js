@@ -16,8 +16,8 @@ exports.removeDeletedTagsAndCategoriesFromItems = ({ req, res, list }) => {
     return Item.find({ listId: list._id }, (err, items) => {
       resolve500Error(err, req, res);
 
-      const tagIds = tags.map(tag => tag.id);
-      const categoryIds = categories.map(category => category.id);
+      const tagIds = tags ? tags.map(tag => tag.id) : [];
+      const categoryIds = categories ? categories.map(category => category.id) : [];
       const bulkUpdateOps = [];
 
       items.forEach(item => {
