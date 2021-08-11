@@ -82,7 +82,7 @@ exports.addList = (req, res) => {
   let tags = [];
   let categories = [];
 
-  if (!(req.tags.length && req.tags[0].id === null)) {
+  if (!(reqTags.length && reqTags[0].id === null)) {
   // if ids for tags and categories are predefined (it happens with test-data)
   // we don't go in this condition
     if (reqTags?.length) {
