@@ -3,7 +3,7 @@ const request = require('supertest');
 const createApp = require('./../server');
 const { testUser: { username, password, email } } = require('../config/test.config');
 const { user: User } = require('./../models');
-const { signIn } = require('./utils.test');
+const { signIn } = require('./utils');
 
 createApp().then(async app => {
 	let userId = '';
