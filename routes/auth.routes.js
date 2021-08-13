@@ -1,6 +1,6 @@
 const { body } = require('express-validator');
 const { verifySignUp, validation } = require('./../middlewares');
-const controller = require('./../controllers/auth.controller');
+const controller = require('../controllers/auth.controller.js');
 
 module.exports = function(app) {
   app.use(function(req, res, next) {
