@@ -22,12 +22,12 @@ module.exports = function(app) {
       verifySignUp.checkDuplicationUsernameOrEmail,
       verifySignUp.checkIsEveryRoleExisted,
     ],
-    controller2.signup,
+    controller.getItem,
   );
 
   app.post(
     '/apasdfasdfasdf',
-    controller2.signin,
+    controller.getItem,
   );
 
   app.get(
