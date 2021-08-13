@@ -1,7 +1,6 @@
 const { body, param, oneOf } = require('express-validator');
-const { authJwt, verifyList, validation, verifySignUp } = require('./../middlewares');
+const { authJwt, verifyList, validation } = require('./../middlewares');
 const controller = require('./../controllers/item.controller');
-const controller2 = require('./../controllers/auth.controller');
 
 module.exports = function(app) {
   app.use(function(req, res, next) {
@@ -11,12 +10,6 @@ module.exports = function(app) {
     );
     next();
   });
-
-
-  app.get(
-    '/api/aaaut/tut',
-    controller.getItem,
-  );
 
   app.get(
     '/api/item/:listid/:id',
@@ -59,7 +52,7 @@ module.exports = function(app) {
     [
       param('listid').isString(),
       body('text').if(body('text').exists()).isString().notEmpty(),
-      body('details').if(body('details').exists()).isString(),
+      body('details').if(body('details').exists()).isString().notEmpty(),
       body('tags').if(body('tags').exists()).isArray(),
       oneOf([
         body('text').exists(),

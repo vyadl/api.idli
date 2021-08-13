@@ -1,6 +1,6 @@
 const { body } = require('express-validator');
 const { verifySignUp, validation } = require('./../middlewares');
-const controller = require('../controllers/auth.controller.js');
+const controller = require('../controllers/auth.controller');
 
 module.exports = function(app) {
   app.use(function(req, res, next) {
@@ -12,7 +12,7 @@ module.exports = function(app) {
   });
 
   app.post(
-    '/ap',
+    '/api/auth/signup',
     [
       body('email').exists().isString().notEmpty(),
       body('username').exists().isString().notEmpty(),
@@ -25,7 +25,12 @@ module.exports = function(app) {
   );
 
   app.post(
-    '/apasdfasdfasdf',
+    '/api/auth/signin',
+    [
+      body('username').exists().isString().notEmpty(),
+      body('password').exists().isString().notEmpty(),
+      validation.verifyBasicValidation,
+    ],
     controller.signin,
   );
 };

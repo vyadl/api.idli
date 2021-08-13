@@ -1,19 +1,6 @@
 require('dotenv').config();
-const db = require('./models');
-const Role = db.role;
-const dbConnectionString = `${
-    process.env.DB_PATH_PREFIX
-  }${
-    process.env.DB_USER
-  }:${
-    process.env.DB_PASS
-  }@${
-    process.env.DB_PATH
-  }/${
-    process.env.DB_NAME
-  }?retryWrites=true&w=majority`;
 
-async function createApp() {
+const createApp = async () => {
   global.echo = console.log;
 
   const express = require('express');
@@ -34,7 +21,7 @@ async function createApp() {
     res.json({ message: 'Welcome to idli application' })
   });
 
-
+  require('./routes/auth.routes')(app);
   require('./routes/user.routes')(app);
   require('./routes/admin.routes')(app);
   require('./routes/list.routes')(app);
@@ -46,7 +33,21 @@ async function createApp() {
     echo(`Server is running on port ${PORT}`);
   });
 
-  await db.mongoose
+  const db = require('./models');
+  const Role = db.role;
+  const dbConnectionString = `${
+      process.env.DB_PATH_PREFIX
+    }${
+      process.env.DB_USER
+    }:${
+      process.env.DB_PASS
+    }@${
+      process.env.DB_PATH
+    }/${
+      process.env.DB_NAME
+    }?retryWrites=true&w=majority`;
+
+  db.mongoose
     .connect(dbConnectionString, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -60,34 +61,32 @@ async function createApp() {
       echo(err);
       process.exit();
     });
-  
-  return app;
-}
 
-function initial() {
-  Role.estimatedDocumentCount((err, count) => {
-    if (!err && count === 0) {
-      new Role({
-        name: 'user',
-      }).save(err => {
-        if (err) {
-          echo('error', err);
-        }
+  function initial() {
+    Role.estimatedDocumentCount((err, count) => {
+      if (!err && count === 0) {
+        new Role({
+          name: 'user',
+        }).save(err => {
+          if (err) {
+            echo('error', err);
+          }
 
-        echo('added "user" to roles collection');
-      });
+          echo('added "user" to roles collection');
+        });
 
-      new Role({
-        name: 'admin',
-      }).save(err => {
-        if (err) {
-          echo('error', err);
-        }
+        new Role({
+          name: 'admin',
+        }).save(err => {
+          if (err) {
+            echo('error', err);
+          }
 
-        echo('added "admin" to roles collection');
-      });
-    }
-  })
-}
+          echo('added "admin" to roles collection');
+        });
+      }
+    })
+  }
+};
 
 module.exports = createApp;
