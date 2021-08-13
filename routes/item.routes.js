@@ -1,7 +1,6 @@
 const { body, param, oneOf } = require('express-validator');
 const { authJwt, verifyList, validation } = require('./../middlewares');
 const controller = require('./../controllers/item.controller');
-const controller2 = require('./../controllers/auth.controller');
 
 module.exports = function(app) {
   app.use(function(req, res, next) {
@@ -39,7 +38,6 @@ module.exports = function(app) {
     '/api/items/add-many/:listid',
     body('items').exists().isArray({ min: 1 }),
     // here "-many" was added for easier recognizing and preventing confusing
-    // body('items').exists().isArray(),
     validation.verifyBasicValidation,
     [
       authJwt.verifyToken,
@@ -47,11 +45,6 @@ module.exports = function(app) {
       verifyList.isListExist,
     ],
     controller.addManyItems,
-  );
-
-  app.post(
-    '/api/au/si',
-    controller2.signin,
   );
 
   app.patch(

@@ -25,7 +25,7 @@ module.exports = function(app) {
   );
 
   app.post(
-    '/api/au/si',
+    '/api/ausi',
     controller.signin,
   );
 };
