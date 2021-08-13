@@ -12,7 +12,7 @@ module.exports = function(app) {
   });
 
   app.post(
-    '/api/au/su',
+    '/ap',
     [
       body('email').exists().isString().notEmpty(),
       body('username').exists().isString().notEmpty(),
@@ -25,7 +25,7 @@ module.exports = function(app) {
   );
 
   app.post(
-    '/api/ausi',
+    '/api',
     controller.signin,
   );
 };
