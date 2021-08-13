@@ -1,8 +1,8 @@
 const db = require('../models');
 const User = db.user;
 const Role = db.role;
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+//const jwt = require('jsonwebtoken');
+//const bcrypt = require('bcryptjs');
 const { resolve500Error } = require('./../middlewares/validation');
 
 exports.signup = (req, res) => {
