@@ -13,7 +13,7 @@ module.exports = function(app) {
   });
 
 
-  app.post(
+  app.get(
     '/api/aaaut/tut',
     controller.getItem,
   );
