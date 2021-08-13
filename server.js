@@ -64,10 +64,6 @@ async function createApp() {
   return app;
 }
 
-if (!module.parent) {
-  createApp();
-}
-
 function initial() {
   Role.estimatedDocumentCount((err, count) => {
     if (!err && count === 0) {
