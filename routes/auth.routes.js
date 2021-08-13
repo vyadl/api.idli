@@ -12,7 +12,7 @@ module.exports = function(app) {
   });
 
   app.post(
-    '/api/auth/signup',
+    '/api/au/su',
     [
       body('email').exists().isString().notEmpty(),
       body('username').exists().isString().notEmpty(),
@@ -25,7 +25,7 @@ module.exports = function(app) {
   );
 
   app.post(
-    '/api/auth/signin',
+    '/api/au/si',
     [
       body('username').exists().isString().notEmpty(),
       body('password').exists().isString().notEmpty(),
