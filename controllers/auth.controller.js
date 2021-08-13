@@ -55,55 +55,55 @@ exports.signup = (req, res) => {
 };
 
 exports.signin = (req, res) => {
-  echo(req);
-  User.findOne({ username: req.body.username })
-    .populate('roles', '-__v')
-    .exec((err, user) => {
-      if (err) {
-        return res.status(500).send({ message: err });
-      }
+  res.send(200).send('sfsdf');
+  // User.findOne({ username: req.body.username })
+  //   .populate('roles', '-__v')
+  //   .exec((err, user) => {
+  //     if (err) {
+  //       return res.status(500).send({ message: err });
+  //     }
 
-      if (!user) {
-        return res.status(404).send({ message: 'User not found' });
-      }
+  //     if (!user) {
+  //       return res.status(404).send({ message: 'User not found' });
+  //     }
 
-      const isPasswordValid = bcrypt.compareSync(
-        req.body.password,
-        user.password,
-      );
+  //     const isPasswordValid = bcrypt.compareSync(
+  //       req.body.password,
+  //       user.password,
+  //     );
       
-      if (user.deletedAt) {
-        return res.status(410).send({
-          accessToken: null,
-          message: 'User was deleted',
-        })
-      }
+  //     if (user.deletedAt) {
+  //       return res.status(410).send({
+  //         accessToken: null,
+  //         message: 'User was deleted',
+  //       })
+  //     }
 
-      if (!isPasswordValid) {
-        return res.status(404).send({
-          accessToken: null,
-          message: 'Invalid password',
-        })
-      }
+  //     if (!isPasswordValid) {
+  //       return res.status(404).send({
+  //         accessToken: null,
+  //         message: 'Invalid password',
+  //       })
+  //     }
 
-      const token = jwt.sign(
-        { id: user.id },
-        process.env.SECRET_AUTH_KEY,
-        { expiresIn: 60 * 60 * 24 }, // 1 day
-      )
-      const authorities = [];
+  //     const token = jwt.sign(
+  //       { id: user.id },
+  //       process.env.SECRET_AUTH_KEY,
+  //       { expiresIn: 60 * 60 * 24 }, // 1 day
+  //     )
+  //     const authorities = [];
 
-      for (let i = 0; i < user.roles.length; i++) {
-        authorities.push(`ROLE_${user.roles[i].name.toUpperCase()}`);
-      }
+  //     for (let i = 0; i < user.roles.length; i++) {
+  //       authorities.push(`ROLE_${user.roles[i].name.toUpperCase()}`);
+  //     }
 
-      res.status(200).send({
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        roles: authorities,
-        accessToken: token,
-      });
-    }
-  );
+  //     res.status(200).send({
+  //       id: user._id,
+  //       username: user.username,
+  //       email: user.email,
+  //       roles: authorities,
+  //       accessToken: token,
+  //     });
+  //   }
+  // );
 };
