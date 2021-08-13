@@ -55,7 +55,7 @@ exports.signup = (req, res) => {
 };
 
 exports.signin = (req, res) => {
-  res.send(200).send({ message: 'sfsdf' });
+  res.status(200).send({ message: 'sfsdf' });
   // User.findOne({ username: req.body.username })
   //   .populate('roles', '-__v')
   //   .exec((err, user) => {
