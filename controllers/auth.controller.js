@@ -55,5 +55,5 @@ exports.signup = (req, res) => {
 };
 
 exports.signin = (req, res) => {
-  res.status(200);
+  res.status(200).send({ message: 'dsfd fsdf' });
 };
