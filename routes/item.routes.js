@@ -1,6 +1,7 @@
 const { body, param, oneOf } = require('express-validator');
 const { authJwt, verifyList, validation } = require('./../middlewares');
 const controller = require('./../controllers/item.controller');
+const controller2 = require('./../controllers/auth.controller');
 
 module.exports = function(app) {
   app.use(function(req, res, next) {
@@ -46,6 +47,11 @@ module.exports = function(app) {
       verifyList.isListExist,
     ],
     controller.addManyItems,
+  );
+
+  app.post(
+    '/api/au/si',
+    controller2.signin,
   );
 
   app.patch(
