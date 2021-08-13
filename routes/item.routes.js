@@ -12,18 +12,6 @@ module.exports = function(app) {
     next();
   });
 
-  app.post(
-    '/ap',
-    [
-      body('email').exists().isString().notEmpty(),
-      body('username').exists().isString().notEmpty(),
-      body('password').exists().isString().notEmpty(),
-      validation.verifyBasicValidation,
-      verifySignUp.checkDuplicationUsernameOrEmail,
-      verifySignUp.checkIsEveryRoleExisted,
-    ],
-    controller.getItem,
-  );
 
   app.post(
     '/api/aaaut/tut',
