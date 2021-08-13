@@ -1,6 +1,6 @@
 const { body } = require('express-validator');
 const { verifySignUp, validation } = require('./../middlewares');
-const controller = require('../controllers/auth.controller');
+const controller = require('./../controllers/auth.controller');
 
 module.exports = function(app) {
   app.use(function(req, res, next) {
@@ -26,11 +26,6 @@ module.exports = function(app) {
 
   app.post(
     '/api/au/si',
-    [
-      body('username').exists().isString().notEmpty(),
-      body('password').exists().isString().notEmpty(),
-      validation.verifyBasicValidation,
-    ],
     controller.signin,
   );
 };
