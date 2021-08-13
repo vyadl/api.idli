@@ -23,8 +23,8 @@ module.exports = function(app) {
 
   app.post(
     '/api/item/add/:listid',
-    body('text').exists().isString(),
-    body('details').if(body('details').exists()).isString(),
+    body('text').exists().isString().notEmpty(),
+    body('details').if(body('details').exists()).isString().notEmpty(),
     validation.verifyBasicValidation,
     [
       authJwt.verifyToken,
@@ -36,6 +36,7 @@ module.exports = function(app) {
 
   app.post(
     '/api/items/add-many/:listid',
+    body('items').exists().isArray({ min: 1 }),
     // here "-many" was added for easier recognizing and preventing confusing
     // body('items').exists().isArray(),
     validation.verifyBasicValidation,
@@ -51,7 +52,7 @@ module.exports = function(app) {
     '/api/item/update/:listid/:id',
     [
       param('listid').isString(),
-      body('text').if(body('text').exists()).isString(),
+      body('text').if(body('text').exists()).isString().notEmpty(),
       body('details').if(body('details').exists()).isString(),
       body('tags').if(body('tags').exists()).isArray(),
       oneOf([

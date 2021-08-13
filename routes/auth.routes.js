@@ -14,9 +14,9 @@ module.exports = function(app) {
   app.post(
     '/api/auth/signup',
     [
-      body('email').exists().isString(),
-      body('username').exists().isString(),
-      body('password').exists().isString(),
+      body('email').exists().isString().notEmpty(),
+      body('username').exists().isString().notEmpty(),
+      body('password').exists().isString().notEmpty(),
       validation.verifyBasicValidation,
       verifySignUp.checkDuplicationUsernameOrEmail,
       verifySignUp.checkIsEveryRoleExisted,
