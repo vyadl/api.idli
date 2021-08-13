@@ -1,9 +1,9 @@
-const db = require('../models');
-const User = db.user;
-const Role = db.role;
+//const db = require('../models');
+//const User = db.user;
+//const Role = db.role;
 //const jwt = require('jsonwebtoken');
 //const bcrypt = require('bcryptjs');
-const { resolve500Error } = require('./../middlewares/validation');
+//const { resolve500Error } = require('./../middlewares/validation');
 
 exports.signup = (req, res) => {
   res.status(200).send({ message: 'sfsdf' });
