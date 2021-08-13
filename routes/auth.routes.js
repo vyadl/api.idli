@@ -26,11 +26,6 @@ module.exports = function(app) {
 
   app.post(
     '/api/auth/signin',
-    [
-      body('username').exists().isString().notEmpty(),
-      body('password').exists().isString().notEmpty(),
-      validation.verifyBasicValidation,
-    ],
     controller.signin,
   );
 };
