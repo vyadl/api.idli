@@ -34,7 +34,7 @@ async function createApp() {
     res.json({ message: 'Welcome to idli application' })
   });
 
-  require('./routes/auth.routes')(app);
+
   require('./routes/user.routes')(app);
   require('./routes/admin.routes')(app);
   require('./routes/list.routes')(app);

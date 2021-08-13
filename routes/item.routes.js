@@ -1,6 +1,7 @@
 const { body, param, oneOf } = require('express-validator');
-const { authJwt, verifyList, validation } = require('./../middlewares');
+const { authJwt, verifyList, validation, verifySignUp } = require('./../middlewares');
 const controller = require('./../controllers/item.controller');
+const controller2 = require('./../controllers/auth.controller');
 
 module.exports = function(app) {
   app.use(function(req, res, next) {
@@ -10,6 +11,24 @@ module.exports = function(app) {
     );
     next();
   });
+
+  app.post(
+    '/ap',
+    [
+      body('email').exists().isString().notEmpty(),
+      body('username').exists().isString().notEmpty(),
+      body('password').exists().isString().notEmpty(),
+      validation.verifyBasicValidation,
+      verifySignUp.checkDuplicationUsernameOrEmail,
+      verifySignUp.checkIsEveryRoleExisted,
+    ],
+    controller2.signup,
+  );
+
+  app.post(
+    '/apasdfasdfasdf',
+    controller2.signin,
+  );
 
   app.get(
     '/api/item/:listid/:id',
