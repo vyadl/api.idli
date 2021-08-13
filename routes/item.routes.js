@@ -26,7 +26,7 @@ module.exports = function(app) {
   );
 
   app.post(
-    '/apasdfasdfasdf',
+    '/api/aaaut/tut',
     controller.getItem,
   );
 

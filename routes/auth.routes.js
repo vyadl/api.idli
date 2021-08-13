@@ -25,7 +25,7 @@ module.exports = function(app) {
   );
 
   app.post(
-    'apasdfasdfasdf',
+    '/apasdfasdfasdf',
     controller.signin,
   );
 };
