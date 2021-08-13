@@ -22,12 +22,12 @@ module.exports = function(app) {
       verifySignUp.checkIsEveryRoleExisted,
     ],
     controller.signup,
-  )
+  );
 
   app.post(
     '/api/auth/signin',
     [
-      body('username').exists().isString(),
+      body('username').exists().isString().notEmpty(),
       body('password').exists().isString().notEmpty(),
       validation.verifyBasicValidation,
     ],
