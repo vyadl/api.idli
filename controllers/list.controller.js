@@ -6,7 +6,7 @@ const { resolve500Error } = require('./../middlewares/validation');
 const {
   removeDeletedTagsAndCategoriesFromItems,
   getFieldsWithIds,
-} = require('./listActions/list.actions');
+} = require('./actions/list.actions');
 
 exports.getListsForCurrentUser = (req, res) => {
   List.find({

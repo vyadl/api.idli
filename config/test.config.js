@@ -4,6 +4,4 @@ module.exports = {
     password: '11111',
     email: 'sdfsfgsdfgf@fsfs.ss'
   },
-  permanentUserName: 'user12345',
-  permanentAdminName: 'admin12345',
 };

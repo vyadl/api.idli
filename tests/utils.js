@@ -1,10 +1,9 @@
 const request = require('supertest');
 require('dotenv').config();
-const { permanentUserName, permanentAdminName } = require('./config');
-const { user: User } = require('./../models');
+const { permanentUserName, permanentAdminName } = require('../config/test.config');
+const { user: User } = require('../models');
 
-exports.signIn = async (app, isAdmin) => {
-  const username = isAdmin ? permanentAdminName : permanentUserName;
+exports.signIn = async (app, username) => {
   const { body } = await request(app)
     .post('/api/auth/signin')
     .send({

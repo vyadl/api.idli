@@ -7,8 +7,8 @@ const { signIn } = require('./utils');
 
 createApp().then(async app => {
 	let userId = '';
-	const user = await signIn(app);
-	const admin = await signIn(app, true);
+	const user = await signIn(app, 'user12345');
+	const admin = await signIn(app, 'admin12345');
 
 	test.serial('sign up', async t => {
 		const res = await request(app)
