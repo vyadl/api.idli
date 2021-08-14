@@ -9,35 +9,13 @@ const createApp = async () => {
 
   const app = express();
 
-  // ## CORS middleware
-  // 
-  // see: http://stackoverflow.com/questions/7067966/how-to-allow-cors-in-express-nodejs
-  var allowCrossDomain = function(req, res, next) {
-      res.header('Access-Control-Allow-Origin', '*');
-      res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-        
-      // intercept OPTIONS method
-      if ('OPTIONS' == req.method) {
-        res.send(200);
-      }
-      else {
-        next();
-      }
+  const corsOptions = {
+    origin: '*',
   };
-  app.use(allowCrossDomain);
+
+  app.use(cors(corsOptions));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
-
-  app.all('/*', function(req, res, next) {
-    if (req.method === 'OPTIONS') {
-      res.setHeader('Access-Control-Allow-Origin', '*')
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
-    
-      res.end();
-    }
-  });
 
   app.get('/', (req, res) => {
     res.json({ message: 'Welcome to idli application' })
