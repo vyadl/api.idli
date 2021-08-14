@@ -11,6 +11,8 @@ const createApp = async () => {
 
   const corsOptions = {
     origin: '*',
+    "methods": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+    "preflightContinue": true,
   };
 
   app.use(cors(corsOptions));
