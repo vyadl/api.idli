@@ -9,7 +9,15 @@ const createApp = async () => {
 
   const app = express();
 
-  app.use(cors());
+  const corsOptions = {
+    "origin": "*",
+    "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
+    "preflightContinue": false,
+    "optionsSuccessStatus": 204
+  };
+
+  app.use(cors(corsOptions));
+  app.options('*', cors());
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
 
