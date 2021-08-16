@@ -14,6 +14,7 @@ const createApp = async () => {
   };
 
   app.use(cors(corsOptions));
+  app.options('*', cors());
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
 

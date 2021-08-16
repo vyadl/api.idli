@@ -24,7 +24,7 @@ module.exports = function(app) {
   app.post(
     '/api/item/add/:listid',
     body('text').exists().isString().notEmpty(),
-    body('details').if(body('details').exists()).isString().notEmpty(),
+    body('details').if(body('details').exists()).isString(),
     validation.verifyBasicValidation,
     [
       authJwt.verifyToken,
