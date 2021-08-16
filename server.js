@@ -10,10 +10,7 @@ const createApp = async () => {
   const app = express();
 
   const corsOptions = {
-    "origin": "*",
-    "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
-    "preflightContinue": true,
-    "optionsSuccessStatus": 204
+    origin: '*',
   };
 
   app.use(cors(corsOptions));
