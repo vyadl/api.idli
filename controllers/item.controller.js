@@ -72,6 +72,7 @@ exports.addItem = (req, res) => {
 
   List.findById(listId).exec((err, list) => {
     list.items.push(item);
+    list.itemsUpdatedAt = now;
 
     item.save(err => {
       resolve500Error(err, req, res);
@@ -111,6 +112,8 @@ exports.addManyItems = (req, res) => {
         list.items.push(_id);
       });
 
+      list.itemsUpdatedAt = now;
+
       list.save(err => {
         resolve500Error(err, req, res);
 
@@ -120,39 +123,43 @@ exports.addManyItems = (req, res) => {
   })
 };
 
-exports.updateItem = (req, res) => {
+exports.updateItem = async (req, res) => {
   const { tags, category } = req.body;
 
-  List.findById(req.params.listid, (err, list) => {
-    if (tags?.length || category) {
-      if (tags?.length) {
-        if (tags.some(tag => !list.tags.some(listTag => listTag.id === +tag))) {
-          return res.status(400).send({ message: 'There is no such tag in this list' });
-        }
-      } else if (!list.categories.some(listCategory => listCategory.id === +category)) {
-        return res.status(400).send({ message: 'There is no such category in this list' });
+  const list = await List.findById(req.params.listid);
+
+  if (tags?.length || category) {
+    if (tags?.length) {
+      if (tags.some(tag => !list.tags.some(listTag => listTag.id === +tag))) {
+        return res.status(400).send({ message: 'There is no such tag in this list' });
       }
+    } else if (!list.categories.some(listCategory => listCategory.id === +category)) {
+      return res.status(400).send({ message: 'There is no such category in this list' });
     }
+  }
 
-    Item.findById(req.params.id, (err, item) => {
-      if (!item) {
-        return res.status(410).send({ message: 'The item doesn\'t exist' });
-      }
+  const item = await Item.findById(req.params.id);
+  const now = new Date();
 
-      Object.keys(req.body).forEach(field => {
-        if (VALID_KEYS_FOR_UPDATE.includes(field)) {
-          item[field] = req.body[field];
-        }
-      });
-  
-      item.updatedAt = new Date();
-      item.save((err, updatedItem) => {
-        resolve500Error(err, req, res);
-  
-        res.status(200).send(updatedItem.toClient());
-      });
-    });
+  if (!item) {
+    return res.status(410).send({ message: 'The item doesn\'t exist' });
+  }
+
+  Object.keys(req.body).forEach(field => {
+    if (VALID_KEYS_FOR_UPDATE.includes(field)) {
+      item[field] = req.body[field];
+    }
   });
+
+  item.updatedAt = now;
+
+  const updatedItem = await item.save();
+
+  list.itemsUpdatedAt = now;
+
+  const updatedList = await list.save();
+
+  res.status(200).send(updatedItem.toClient());
 };
 
 

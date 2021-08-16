@@ -108,6 +108,7 @@ exports.addList = (req, res) => {
     createdAt: now,
     updatedAt: now,
     deletedAt: null,
+    itemsUpdatedAt: now,
     items: [],
     name,
     tags,
