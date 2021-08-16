@@ -126,40 +126,44 @@ exports.addManyItems = (req, res) => {
 exports.updateItem = async (req, res) => {
   const { tags, category } = req.body;
 
-  const list = await List.findById(req.params.listid);
+  try {
+    const list = await List.findById(req.params.listid);
 
-  if (tags?.length || category) {
-    if (tags?.length) {
-      if (tags.some(tag => !list.tags.some(listTag => listTag.id === +tag))) {
-        return res.status(400).send({ message: 'There is no such tag in this list' });
+    if (tags?.length || category) {
+      if (tags?.length) {
+        if (tags.some(tag => !list.tags.some(listTag => listTag.id === +tag))) {
+          return res.status(400).send({ message: 'There is no such tag in this list' });
+        }
+      } else if (!list.categories.some(listCategory => listCategory.id === +category)) {
+        return res.status(400).send({ message: 'There is no such category in this list' });
       }
-    } else if (!list.categories.some(listCategory => listCategory.id === +category)) {
-      return res.status(400).send({ message: 'There is no such category in this list' });
     }
-  }
 
-  const item = await Item.findById(req.params.id);
-  const now = new Date();
+    const item = await Item.findById(req.params.id);
+    const now = new Date();
 
-  if (!item) {
-    return res.status(410).send({ message: 'The item doesn\'t exist' });
-  }
-
-  Object.keys(req.body).forEach(field => {
-    if (VALID_KEYS_FOR_UPDATE.includes(field)) {
-      item[field] = req.body[field];
+    if (!item) {
+      return res.status(410).send({ message: 'The item doesn\'t exist' });
     }
-  });
 
-  item.updatedAt = now;
+    Object.keys(req.body).forEach(field => {
+      if (VALID_KEYS_FOR_UPDATE.includes(field)) {
+        item[field] = req.body[field];
+      }
+    });
 
-  const updatedItem = await item.save();
+    item.updatedAt = now;
 
-  list.itemsUpdatedAt = now;
+    const updatedItem = await item.save();
 
-  const updatedList = await list.save();
+    list.itemsUpdatedAt = now;
 
-  res.status(200).send(updatedItem.toClient());
+    const updatedList = await list.save();
+
+    res.status(200).send(updatedItem.toClient());
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
 
 
