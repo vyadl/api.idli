@@ -46,7 +46,7 @@ exports.getItem = (req, res) => {
   });
 };
 
-exports.addItem = (req, res) => {
+exports.addItem = async (req, res) => {
   const { text, details, tags, category } = req.body;
   const { listid: listId } = req.params;
 
@@ -70,6 +70,7 @@ exports.addItem = (req, res) => {
     deletedAt: null,
   });
 
+  try {
   List.findById(listId).exec((err, list) => {
     list.items.push(item);
     list.itemsUpdatedAt = now;
@@ -84,9 +85,12 @@ exports.addItem = (req, res) => {
       });
     });
   });
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
 
-exports.addManyItems = (req, res) => {
+exports.addManyItems = async (req, res) => {
   const { listid: listId } = req.params;
   const { items } = req.body;
   const now = new Date();
@@ -102,25 +106,21 @@ exports.addManyItems = (req, res) => {
     })
   );
 
-  Item.insertMany(preparedItems, (err, addedItems) => {
-    resolve500Error(err, req, res);
+  try {
+    const addedItems = await Item.insertMany(preparedItems);
+    const list = await List.findById(listId);
 
-    List.findById(listId, (err, list) => {
-      resolve500Error(err, req, res);
-
-      addedItems.forEach(({ _id }) => {
-        list.items.push(_id);
-      });
-
-      list.itemsUpdatedAt = now;
-
-      list.save(err => {
-        resolve500Error(err, req, res);
-
-        res.status(200).send(addedItems.map(item => item.toClient()));
-      });
+    addedItems.forEach(({ _id }) => {
+      list.items.push(_id);
     });
-  })
+
+    list.itemsUpdatedAt = now;
+    await list.save();
+
+    res.status(200).send(addedItems.map(item => item.toClient()));
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
 
 exports.updateItem = async (req, res) => {
@@ -182,7 +182,8 @@ exports.softDeleteItem = async (req, res) => {
     item.deletedAt = now;
     list.itemsUpdatedAt = now;
 
-    await Promise.all([list.save(), item.save()]);
+    await item.save();
+    await list.save();
 
     res.status(200).send({ message: 'The item is successfully deleted' });
   } catch(err) {
