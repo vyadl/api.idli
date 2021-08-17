@@ -167,23 +167,27 @@ exports.updateItem = async (req, res) => {
 };
 
 
-exports.softDeleteItem = (req, res) => {
-  Item.findById(req.params.id)
-    .exec((err, item) => {
-      resolve500Error(err, req, res);
+exports.softDeleteItem = async (req, res) => {
+  try {
+    const [item, list] = await Promise.all([
+      Item.findById(req.params.id),
+      List.findById(req.params.listid),
+    ]);
+    const now = new Date();
 
-      if (item.deletedAt) {
-        return res.status(400).send({ message: 'The item is already deleted' });
-      }
+    if (item.deletedAt) {
+      return res.status(400).send({ message: 'The item is already deleted' });
+    }
 
-      item.deletedAt = new Date();
+    item.deletedAt = now;
+    list.itemsUpdatedAt = now;
 
-      item.save(err => {
-        resolve500Error(err, req, res);
+    await Promise.all([list.save(), item.save()]);
 
-        res.status(200).send({ message: 'The item is successfully deleted' });
-      })
-    });
+    res.status(200).send({ message: 'The item is successfully deleted' });
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
 
 exports.restoreItem = (req, res) => {
