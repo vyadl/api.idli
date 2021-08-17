@@ -126,9 +126,9 @@ exports.addList = async (req, res) => {
   });
 
   try {
-    const list = await = list.save();
+    const savedList = await list.save();
 
-    return res.status(200).send(list.toClient());
+    return res.status(200).send(savedList.toClient());
   } catch (err) {
     resolve500Error(err, req, res);
   }
@@ -139,6 +139,7 @@ exports.updateList = async (req, res) => {
     name: req.body.name,
     userId: req.userId,
     deletedAt: null,
+    _id: { $ne: req.params.listid },
   })).length;
 
   if (isListExistWithSameName) {
@@ -178,12 +179,12 @@ exports.updateList = async (req, res) => {
 
 exports.softDeleteList = async (req, res) => {
   try {
-    await List.findById(req.params.listid);
+    const list = await List.findById(req.params.listid);
 
     list.deletedAt = new Date();
 
     await list.save();
-
+    
     res.status(200).send({ message: 'The list is successfully deleted' });
   } catch(err) {
     resolve500Error(err, req, res);
