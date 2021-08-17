@@ -43,7 +43,7 @@ exports.getPublicListsByUserId = (req, res) => {
       res.status(200).send(finalLists);
     });
   });
-}
+};
 
 exports.getList = (req, res) => {
   List.findById(req.params.id)
@@ -71,7 +71,7 @@ exports.getList = (req, res) => {
   });
 }
 
-exports.addList = (req, res) => {
+exports.addList = async (req, res) => {
   const {
     tags: reqTags,
     categories: reqCategories,
@@ -79,8 +79,17 @@ exports.addList = (req, res) => {
     isPrivate,
   } = req.body;
   const now = new Date();
+  const isListExistWithSameName = !!(await List.find({
+    name,
+    userId: req.userId,
+    deletedAt: null,
+  })).length;
   let tags = [];
   let categories = [];
+
+  if (isListExistWithSameName) {
+    return res.status(400).send({ message: 'You are already have a list with this name' });
+  }
 
   if (!(reqTags.length && reqTags[0].id === null)) {
   // if ids for tags and categories are predefined (it happens with test-data)
@@ -122,7 +131,17 @@ exports.addList = (req, res) => {
   });
 }
 
-exports.updateList = (req, res) => {
+exports.updateList = async (req, res) => {
+  const isListExistWithSameName = !!(await List.find({
+    name: req.body.name,
+    userId: req.userId,
+    deletedAt: null,
+  })).length;
+
+  if (isListExistWithSameName) {
+    return res.status(400).send({ message: 'You are already have a list with this name' });
+  }
+
   List.findById(req.params.listid).exec((err, list) => {
     resolve500Error(err, req, res);
 
