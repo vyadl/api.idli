@@ -12,5 +12,4 @@ createApp().then(async app => {
   test.todo('delete list');
   test.todo('try to update another list');
   test.todo('try to delete another list');
-  
 });
