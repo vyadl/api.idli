@@ -41,7 +41,6 @@ createApp().then(async app => {
   });
 
   test.serial('delete user', async t => {
-
     await User.findByIdAndDelete(userId);
 
     const { status, body } = await request(app)
