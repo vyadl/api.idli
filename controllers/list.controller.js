@@ -7,6 +7,7 @@ const {
   removeDeletedTagsAndCategoriesFromItems,
   getFieldsWithIds,
 } = require('./actions/list.actions');
+const { list } = require('../models');
 
 exports.getListsForCurrentUser = (req, res) => {
   List.find({
@@ -124,11 +125,13 @@ exports.addList = async (req, res) => {
     categories,
   });
 
-  list.save((err, list) => {
-    resolve500Error(err, req, res);
+  try {
+    const list = await = list.save();
 
-    res.status(200).send(list.toClient());
-  });
+    return res.status(200).send(list.toClient());
+  } catch (err) {
+    resolve500Error(err, req, res);
+  }
 }
 
 exports.updateList = async (req, res) => {
@@ -142,8 +145,12 @@ exports.updateList = async (req, res) => {
     return res.status(400).send({ message: 'You are already have a list with this name' });
   }
 
-  List.findById(req.params.listid).exec((err, list) => {
-    resolve500Error(err, req, res);
+  try {
+    const list = await List.findById(req.params.listid);
+
+    if (list.deletedAt) {
+      return res.status(410).send({ message: 'The list is deleted' });
+    }
 
     if (list.deletedAt) {
       return res.status(410).send({ message: 'The list is deleted' });
@@ -156,40 +163,31 @@ exports.updateList = async (req, res) => {
       list[field] = fieldsWithIds[field];
     });
     list.updatedAt = new Date();
-    
-    list.save((err, updatedList) => {
-      resolve500Error(err, req, res);
 
-      removeDeletedTagsAndCategoriesFromItems({ list: oldList, req, res })
-        .then(() => {
-          List
-              .findById(updatedList._id)
-              .populate('items')
-              .exec((err, populatedList) => {
-                resolve500Error(err, req, res);
+    const updatedList = await list.save();
 
-                return res.status(200).send(populatedList.listToClientPopulated());
-              });
-        }).catch(err => {
-          resolve500Error(err, req, res);
-        });
-    });
-  });
+    await removeDeletedTagsAndCategoriesFromItems({ list: oldList, req, res });
+
+    const populatedList = await List.findById(updatedList._id).populate('items');
+
+    return res.status(200).send(populatedList.listToClientPopulated());
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
 
-exports.softDeleteList = (req, res) => {
-  List.findById(req.params.listid)
-    .exec((err, list) => {
-      resolve500Error(err, req, res);
+exports.softDeleteList = async (req, res) => {
+  try {
+    await List.findById(req.params.listid);
 
-      list.deletedAt = new Date();
+    list.deletedAt = new Date();
 
-      list.save(err => {
-        resolve500Error(err, req, res);
+    await list.save();
 
-        res.status(200).send({ message: 'The list is successfully deleted' });
-      })
-    });
+    res.status(200).send({ message: 'The list is successfully deleted' });
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
 
 exports.restoreList = (req, res) => {
