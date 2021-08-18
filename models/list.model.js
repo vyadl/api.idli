@@ -10,6 +10,7 @@ const schema = new mongoose.Schema({
   createdAt: Date,
   updatedAt: Date,
   deletedAt: Date,
+  itemsUpdatedAt: Date,
   items: [
     {
       type: 'ObjectId',

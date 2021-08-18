@@ -6,7 +6,8 @@ const { resolve500Error } = require('./../middlewares/validation');
 const {
   removeDeletedTagsAndCategoriesFromItems,
   getFieldsWithIds,
-} = require('./listActions/list.actions');
+} = require('./actions/list.actions');
+const { list } = require('../models');
 
 exports.getListsForCurrentUser = (req, res) => {
   List.find({
@@ -43,7 +44,7 @@ exports.getPublicListsByUserId = (req, res) => {
       res.status(200).send(finalLists);
     });
   });
-}
+};
 
 exports.getList = (req, res) => {
   List.findById(req.params.id)
@@ -71,7 +72,7 @@ exports.getList = (req, res) => {
   });
 }
 
-exports.addList = (req, res) => {
+exports.addList = async (req, res) => {
   const {
     tags: reqTags,
     categories: reqCategories,
@@ -79,8 +80,17 @@ exports.addList = (req, res) => {
     isPrivate,
   } = req.body;
   const now = new Date();
+  const isListWithSameNameExist = !!(await List.find({
+    name,
+    userId: req.userId,
+    deletedAt: null,
+  })).length;
   let tags = [];
   let categories = [];
+
+  if (isListWithSameNameExist) {
+    return res.status(400).send({ message: 'You are already have a list with this name' });
+  }
 
   if (!(reqTags.length && reqTags[0].id === null)) {
   // if ids for tags and categories are predefined (it happens with test-data)
@@ -108,22 +118,40 @@ exports.addList = (req, res) => {
     createdAt: now,
     updatedAt: now,
     deletedAt: null,
+    itemsUpdatedAt: now,
     items: [],
     name,
     tags,
     categories,
   });
 
-  list.save((err, list) => {
-    resolve500Error(err, req, res);
+  try {
+    const savedList = await list.save();
 
-    res.status(200).send(list.toClient());
-  });
+    return res.status(200).send(savedList.toClient());
+  } catch (err) {
+    resolve500Error(err, req, res);
+  }
 }
 
-exports.updateList = (req, res) => {
-  List.findById(req.params.listid).exec((err, list) => {
-    resolve500Error(err, req, res);
+exports.updateList = async (req, res) => {
+  const isListWithSameNameExist = !!(await List.find({
+    name: req.body.name,
+    userId: req.userId,
+    deletedAt: null,
+    _id: { $ne: req.params.listid },
+  })).length;
+
+  if (isListWithSameNameExist) {
+    return res.status(400).send({ message: 'You already have a list with this name' });
+  }
+
+  try {
+    const list = await List.findById(req.params.listid);
+
+    if (list.deletedAt) {
+      return res.status(410).send({ message: 'The list is deleted' });
+    }
 
     if (list.deletedAt) {
       return res.status(410).send({ message: 'The list is deleted' });
@@ -136,40 +164,31 @@ exports.updateList = (req, res) => {
       list[field] = fieldsWithIds[field];
     });
     list.updatedAt = new Date();
-    
-    list.save((err, updatedList) => {
-      resolve500Error(err, req, res);
 
-      removeDeletedTagsAndCategoriesFromItems({ list: oldList, req, res })
-        .then(() => {
-          List
-              .findById(updatedList._id)
-              .populate('items')
-              .exec((err, populatedList) => {
-                resolve500Error(err, req, res);
+    const updatedList = await list.save();
 
-                return res.status(200).send(populatedList.listToClientPopulated());
-              });
-        }).catch(err => {
-          resolve500Error(err, req, res);
-        });
-    });
-  });
+    await removeDeletedTagsAndCategoriesFromItems({ list: oldList, req, res });
+
+    const populatedList = await List.findById(updatedList._id).populate('items');
+
+    return res.status(200).send(populatedList.listToClientPopulated());
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
 
-exports.softDeleteList = (req, res) => {
-  List.findById(req.params.listid)
-    .exec((err, list) => {
-      resolve500Error(err, req, res);
+exports.softDeleteList = async (req, res) => {
+  try {
+    const list = await List.findById(req.params.listid);
 
-      list.deletedAt = new Date();
+    list.deletedAt = new Date();
 
-      list.save(err => {
-        resolve500Error(err, req, res);
-
-        res.status(200).send({ message: 'The list is successfully deleted' });
-      })
-    });
+    await list.save();
+    
+    res.status(200).send({ message: 'The list is successfully deleted' });
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
 
 exports.restoreList = (req, res) => {

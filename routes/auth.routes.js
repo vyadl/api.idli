@@ -1,4 +1,5 @@
-const { verifySignUp } = require('./../middlewares');
+const { body } = require('express-validator');
+const { verifySignUp, validation } = require('./../middlewares');
 const controller = require('../controllers/auth.controller');
 
 module.exports = function(app) {
@@ -13,14 +14,23 @@ module.exports = function(app) {
   app.post(
     '/api/auth/signup',
     [
+      body('email').exists().isString().notEmpty(),
+      body('username').exists().isString().notEmpty(),
+      body('password').exists().isString().notEmpty(),
+      validation.verifyBasicValidation,
       verifySignUp.checkDuplicationUsernameOrEmail,
       verifySignUp.checkIsEveryRoleExisted,
     ],
     controller.signup,
-  )
+  );
 
   app.post(
     '/api/auth/signin',
+    [
+      body('username').exists().isString().notEmpty(),
+      body('password').exists().isString().notEmpty(),
+      validation.verifyBasicValidation,
+    ],
     controller.signin,
   );
 };

@@ -21,7 +21,7 @@ module.exports = function(app) {
   );
 
   app.get('/api/user/lists/:userid', [
-      param('userid').isString(),
+      param('userid').isString().notEmpty(),
       validation.verifyBasicValidation,
     ],
     controller.getPublicListsByUserId,
@@ -30,7 +30,7 @@ module.exports = function(app) {
   app.post(
     '/api/list/add',
     [
-      body('name').exists().isString(),
+      body('name').exists().isString().notEmpty(),
       body('isPrivate').if(body('isPrivate').exists()).isBoolean(),
       validation.verifyBasicValidation,
       authJwt.verifyToken,
@@ -45,7 +45,7 @@ module.exports = function(app) {
       body('isPrivate').if(body('isPrivate').exists()).isBoolean(),
       body('categories').if(body('categories').exists()).isArray(),
       body('tags').if(body('tags').exists()).isArray(),
-      body('name').if(body('name').exists()).isString(),
+      body('name').if(body('name').exists()).isString().notEmpty(),
       oneOf([
         body('isPrivate').exists(),
         body('categories').exists(),

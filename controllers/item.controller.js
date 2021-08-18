@@ -46,7 +46,7 @@ exports.getItem = (req, res) => {
   });
 };
 
-exports.addItem = (req, res) => {
+exports.addItem = async (req, res) => {
   const { text, details, tags, category } = req.body;
   const { listid: listId } = req.params;
 
@@ -70,8 +70,10 @@ exports.addItem = (req, res) => {
     deletedAt: null,
   });
 
+  try {
   List.findById(listId).exec((err, list) => {
     list.items.push(item);
+    list.itemsUpdatedAt = now;
 
     item.save(err => {
       resolve500Error(err, req, res);
@@ -83,9 +85,12 @@ exports.addItem = (req, res) => {
       });
     });
   });
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
 
-exports.addManyItems = (req, res) => {
+exports.addManyItems = async (req, res) => {
   const { listid: listId } = req.params;
   const { items } = req.body;
   const now = new Date();
@@ -101,29 +106,29 @@ exports.addManyItems = (req, res) => {
     })
   );
 
-  Item.insertMany(preparedItems, (err, addedItems) => {
-    resolve500Error(err, req, res);
+  try {
+    const addedItems = await Item.insertMany(preparedItems);
+    const list = await List.findById(listId);
 
-    List.findById(listId, (err, list) => {
-      resolve500Error(err, req, res);
-
-      addedItems.forEach(({ _id }) => {
-        list.items.push(_id);
-      });
-
-      list.save(err => {
-        resolve500Error(err, req, res);
-
-        res.status(200).send(addedItems.map(item => item.toClient()));
-      });
+    addedItems.forEach(({ _id }) => {
+      list.items.push(_id);
     });
-  })
+
+    list.itemsUpdatedAt = now;
+    await list.save();
+
+    res.status(200).send(addedItems.map(item => item.toClient()));
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
 
-exports.updateItem = (req, res) => {
+exports.updateItem = async (req, res) => {
   const { tags, category } = req.body;
 
-  List.findById(req.params.listid, (err, list) => {
+  try {
+    const list = await List.findById(req.params.listid);
+
     if (tags?.length || category) {
       if (tags?.length) {
         if (tags.some(tag => !list.tags.some(listTag => listTag.id === +tag))) {
@@ -134,45 +139,56 @@ exports.updateItem = (req, res) => {
       }
     }
 
-    Item.findById(req.params.id, (err, item) => {
-      if (!item) {
-        return res.status(410).send({ message: 'The item doesn\'t exist' });
-      }
+    const item = await Item.findById(req.params.id);
+    const now = new Date();
 
-      Object.keys(req.body).forEach(field => {
-        if (VALID_KEYS_FOR_UPDATE.includes(field)) {
-          item[field] = req.body[field];
-        }
-      });
-  
-      item.updatedAt = new Date();
-      item.save((err, updatedItem) => {
-        resolve500Error(err, req, res);
-  
-        res.status(200).send(updatedItem.toClient());
-      });
+    if (!item) {
+      return res.status(410).send({ message: 'The item doesn\'t exist' });
+    }
+
+    Object.keys(req.body).forEach(field => {
+      if (VALID_KEYS_FOR_UPDATE.includes(field)) {
+        item[field] = req.body[field];
+      }
     });
-  });
+
+    item.updatedAt = now;
+
+    const updatedItem = await item.save();
+
+    list.itemsUpdatedAt = now;
+
+    const updatedList = await list.save();
+
+    res.status(200).send(updatedItem.toClient());
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
 
 
-exports.softDeleteItem = (req, res) => {
-  Item.findById(req.params.id)
-    .exec((err, item) => {
-      resolve500Error(err, req, res);
+exports.softDeleteItem = async (req, res) => {
+  try {
+    const [item, list] = await Promise.all([
+      Item.findById(req.params.id),
+      List.findById(req.params.listid),
+    ]);
+    const now = new Date();
 
-      if (item.deletedAt) {
-        return res.status(400).send({ message: 'The item is already deleted' });
-      }
+    if (item.deletedAt) {
+      return res.status(400).send({ message: 'The item is already deleted' });
+    }
 
-      item.deletedAt = new Date();
+    item.deletedAt = now;
+    list.itemsUpdatedAt = now;
 
-      item.save(err => {
-        resolve500Error(err, req, res);
+    await item.save();
+    await list.save();
 
-        res.status(200).send({ message: 'The item is successfully deleted' });
-      })
-    });
+    res.status(200).send({ message: 'The item is successfully deleted' });
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
 
 exports.restoreItem = (req, res) => {

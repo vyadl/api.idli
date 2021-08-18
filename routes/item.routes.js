@@ -23,11 +23,11 @@ module.exports = function(app) {
 
   app.post(
     '/api/item/add/:listid',
-    body('text').exists().isString(),
-    body('details').if(body('details').exists()).isString(),
-    validation.verifyBasicValidation,
     [
       authJwt.verifyToken,
+      body('text').exists().isString().notEmpty(),
+      body('details').if(body('details').exists()).isString(),
+      validation.verifyBasicValidation,
       verifyList.isListBelongToUser,
       verifyList.isListExist,
     ],
@@ -36,11 +36,11 @@ module.exports = function(app) {
 
   app.post(
     '/api/items/add-many/:listid',
-    // here "-many" was added for easier recognizing and preventing confusing
-    // body('items').exists().isArray(),
-    validation.verifyBasicValidation,
     [
       authJwt.verifyToken,
+      body('items').exists().isArray({ min: 1 }),
+      // here "-many" was added for easier recognizing and preventing confusing
+      validation.verifyBasicValidation,
       verifyList.isListBelongToUser,
       verifyList.isListExist,
     ],
@@ -50,8 +50,9 @@ module.exports = function(app) {
   app.patch(
     '/api/item/update/:listid/:id',
     [
+      authJwt.verifyToken,
       param('listid').isString(),
-      body('text').if(body('text').exists()).isString(),
+      body('text').if(body('text').exists()).isString().notEmpty(),
       body('details').if(body('details').exists()).isString(),
       body('tags').if(body('tags').exists()).isArray(),
       oneOf([
@@ -61,7 +62,6 @@ module.exports = function(app) {
         body('tags').exists(),
       ], 'At least one field to change is required (text, details, category, tags)'),
       validation.verifyBasicValidation,
-      authJwt.verifyToken,
       verifyList.isListBelongToUser,
       verifyList.isListExist,
     ],

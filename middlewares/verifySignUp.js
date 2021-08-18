@@ -10,7 +10,7 @@ const checkDuplicationUsernameOrEmail = (req, res, next) => {
     resolve500Error(err, req, res);
 
     if (user) {
-      res.status(400).send({ message: 'Failed! Username is already in use/' })
+      return res.status(400).send({ message: 'Failed! Username is already in use/' })
     }
 
     User.findOne({
@@ -19,7 +19,7 @@ const checkDuplicationUsernameOrEmail = (req, res, next) => {
       resolve500Error(err, req, res);
 
       if (email) {
-        res.status(400).send({ message: 'Failed! Email is already in use/' })
+        return res.status(400).send({ message: 'Failed! Email is already in use/' })
       }
 
       next();

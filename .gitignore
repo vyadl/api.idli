@@ -3,7 +3,12 @@ build/Release
 
 # Dependency directories
 node_modules/
+tmp/
 
 # dotenv environment variables file
 .env
 .env.test
+
+package-lock.json
+
+.htaccess

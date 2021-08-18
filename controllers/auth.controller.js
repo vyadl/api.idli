@@ -1,4 +1,3 @@
-const config = require('../config/auth.config');
 const db = require('../models');
 const User = db.user;
 const Role = db.role;
@@ -88,13 +87,13 @@ exports.signin = (req, res) => {
 
       const token = jwt.sign(
         { id: user.id },
-        config.secret,
+        process.env.SECRET_AUTH_KEY,
         { expiresIn: 60 * 60 * 24 }, // 1 day
       )
       const authorities = [];
 
-      for (let i = 0; i > user.roles.length; i++) {
-        authorities.push('ROLE_', user.roles[i].name.toUpperCase());
+      for (let i = 0; i < user.roles.length; i++) {
+        authorities.push(`ROLE_${user.roles[i].name.toUpperCase()}`);
       }
 
       res.status(200).send({

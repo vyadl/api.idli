@@ -1,9 +1,9 @@
 const jwt = require('jsonwebtoken');
-const config = require('../config/auth.config.js');
 const db = require('../models');
 const User = db.user;
 const Role = db.role;
 const { resolve500Error } = require('./../middlewares/validation');
+const SECRET_AUTH_KEY = process.env.SECRET_AUTH_KEY;
 
 const verifyToken = (req, res, next) => {
   const token = req.headers['x-access-token'];
@@ -12,7 +12,7 @@ const verifyToken = (req, res, next) => {
     return res.status(403).send({ message: 'No token provided.' });
   }
 
-  jwt.verify(token, config.secret, (err, decoded) => {
+  jwt.verify(token, SECRET_AUTH_KEY, (err, decoded) => {
     if (err) {
       return res.status(401).send({ message: 'Invalid JWT Token' });
     }
@@ -26,7 +26,7 @@ const verifyToken = (req, res, next) => {
 const getUserId = (req, res, next) => {
   const token = req.headers['x-access-token'];
 
-  jwt.verify(token, config.secret, (err, decoded) => {
+  jwt.verify(token, SECRET_AUTH_KEY, (err, decoded) => {
     if (decoded) {
       req.userId = decoded.id;
     } else {
