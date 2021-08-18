@@ -80,7 +80,7 @@ exports.addList = async (req, res) => {
     isPrivate,
   } = req.body;
   const now = new Date();
-  const isListExistWithSameName = !!(await List.find({
+  const isListWithSameNameExist = !!(await List.find({
     name,
     userId: req.userId,
     deletedAt: null,
@@ -88,7 +88,7 @@ exports.addList = async (req, res) => {
   let tags = [];
   let categories = [];
 
-  if (isListExistWithSameName) {
+  if (isListWithSameNameExist) {
     return res.status(400).send({ message: 'You are already have a list with this name' });
   }
 
@@ -135,15 +135,15 @@ exports.addList = async (req, res) => {
 }
 
 exports.updateList = async (req, res) => {
-  const isListExistWithSameName = !!(await List.find({
+  const isListWithSameNameExist = !!(await List.find({
     name: req.body.name,
     userId: req.userId,
     deletedAt: null,
     _id: { $ne: req.params.listid },
   })).length;
 
-  if (isListExistWithSameName) {
-    return res.status(400).send({ message: 'You are already have a list with this name' });
+  if (isListWithSameNameExist) {
+    return res.status(400).send({ message: 'You already have a list with this name' });
   }
 
   try {
