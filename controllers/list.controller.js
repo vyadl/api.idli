@@ -89,7 +89,7 @@ exports.addList = async (req, res) => {
   let categories = [];
 
   if (isListWithSameNameExist) {
-    return res.status(400).send({ message: 'You are already have a list with this name' });
+    return res.status(400).send({ message: 'You already have a list with this name' });
   }
 
   if (!(reqTags.length && reqTags[0].id === null)) {
