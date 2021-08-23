@@ -14,6 +14,7 @@ module.exports = function(app) {
   app.get('/api/lists', [authJwt.verifyToken], controller.getListsForCurrentUser);
 
   app.get('/api/list/:id', [
+      authJwt.verifyToken,
       authJwt.getUserId,
       verifyList.isListExist,
     ],

@@ -25,7 +25,7 @@ module.exports = function(app) {
     '/api/item/add/:listid',
     [
       authJwt.verifyToken,
-      body('text').exists().isString().notEmpty(),
+      body('title').exists().isString().notEmpty(),
       body('details').if(body('details').exists()).isString(),
       validation.verifyBasicValidation,
       verifyList.isListBelongToUser,
@@ -52,15 +52,15 @@ module.exports = function(app) {
     [
       authJwt.verifyToken,
       param('listid').isString(),
-      body('text').if(body('text').exists()).isString().notEmpty(),
+      body('title').if(body('title').exists()).isString().notEmpty(),
       body('details').if(body('details').exists()).isString(),
       body('tags').if(body('tags').exists()).isArray(),
       oneOf([
-        body('text').exists(),
+        body('title').exists(),
         body('details').exists(),
         body('category').exists(),
         body('tags').exists(),
-      ], 'At least one field to change is required (text, details, category, tags)'),
+      ], 'At least one field to change is required (title, details, category, tags)'),
       validation.verifyBasicValidation,
       verifyList.isListBelongToUser,
       verifyList.isListExist,

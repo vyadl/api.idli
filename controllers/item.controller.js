@@ -3,7 +3,7 @@ const User = db.user;
 const List = require('./../models/list.model');
 const Item = require('./../models/item.model');
 const { resolve500Error } = require('./../middlewares/validation');
-const VALID_KEYS_FOR_UPDATE = ['text', 'details', 'tags', 'category'];
+const VALID_KEYS_FOR_UPDATE = ['title', 'details', 'tags', 'category'];
 
 
 exports.getItem = (req, res) => {
@@ -47,11 +47,11 @@ exports.getItem = (req, res) => {
 };
 
 exports.addItem = async (req, res) => {
-  const { text, details, tags, category } = req.body;
+  const { title, details, tags, category } = req.body;
   const { listid: listId } = req.params;
 
-  if (!text) {
-    res.status(400).send({ message: 'Text is required' });
+  if (!title) {
+    res.status(400).send({ message: 'Title is required' });
   }
 
   if (!listId) {
@@ -61,7 +61,7 @@ exports.addItem = async (req, res) => {
   const now = new Date();
   const item = new Item({
     listId,
-    text: text,
+    title,
     details: details || '',
     tags: tags || [],
     category: category || null,
@@ -71,20 +71,20 @@ exports.addItem = async (req, res) => {
   });
 
   try {
-  List.findById(listId).exec((err, list) => {
-    list.items.push(item);
-    list.itemsUpdatedAt = now;
+    List.findById(listId).exec((err, list) => {
+      list.items.push(item);
+      list.itemsUpdatedAt = now;
 
-    item.save(err => {
-      resolve500Error(err, req, res);
-
-      list.save((err, list) => {
+      item.save(err => {
         resolve500Error(err, req, res);
-    
-        res.status(200).send(item.toClient());
+
+        list.save((err, list) => {
+          resolve500Error(err, req, res);
+      
+          res.status(200).send(item.toClient());
+        });
       });
     });
-  });
   } catch(err) {
     resolve500Error(err, req, res);
   }
@@ -94,9 +94,9 @@ exports.addManyItems = async (req, res) => {
   const { listid: listId } = req.params;
   const { items } = req.body;
   const now = new Date();
-  const preparedItems = items.map(({ text, details, tags, category }) => ({
+  const preparedItems = items.map(({ title, details, tags, category }) => ({
       listId,
-      text: text,
+      title,
       details: details || '',
       tags: tags || [],
       category: category || null,

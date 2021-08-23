@@ -136,7 +136,7 @@ exports.addList = async (req, res) => {
 
 exports.updateList = async (req, res) => {
   const isListWithSameNameExist = !!(await List.find({
-    name: req.body.name,
+    name: req.body.title,
     userId: req.userId,
     deletedAt: null,
     _id: { $ne: req.params.listid },
