@@ -76,20 +76,20 @@ exports.addList = async (req, res) => {
   const {
     tags: reqTags,
     categories: reqCategories,
-    name,
+    title,
     isPrivate,
   } = req.body;
   const now = new Date();
-  const isListWithSameNameExist = !!(await List.find({
-    name,
+  const isListWithSameTitleExist = !!(await List.find({
+    title,
     userId: req.userId,
     deletedAt: null,
   })).length;
   let tags = [];
   let categories = [];
 
-  if (isListWithSameNameExist) {
-    return res.status(400).send({ message: 'You already have a list with this name' });
+  if (isListWithSameTitleExist) {
+    return res.status(400).send({ message: 'You already have a list with this title' });
   }
 
   if (!(reqTags.length && reqTags[0].id === null)) {
@@ -120,7 +120,7 @@ exports.addList = async (req, res) => {
     deletedAt: null,
     itemsUpdatedAt: now,
     items: [],
-    name,
+    title,
     tags,
     categories,
   });
@@ -135,15 +135,15 @@ exports.addList = async (req, res) => {
 }
 
 exports.updateList = async (req, res) => {
-  const isListWithSameNameExist = !!(await List.find({
-    name: req.body.title,
+  const isListWithSameTitleExist = !!(await List.find({
+    title: req.body.title,
     userId: req.userId,
     deletedAt: null,
     _id: { $ne: req.params.listid },
   })).length;
 
-  if (isListWithSameNameExist) {
-    return res.status(400).send({ message: 'You already have a list with this name' });
+  if (isListWithSameTitleExist) {
+    return res.status(400).send({ message: 'You already have a list with this title' });
   }
 
   try {
