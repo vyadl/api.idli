@@ -7,6 +7,13 @@ exports.checkIsSomethingDeletedByIds = (oldObj, newObj) => {
 
 exports.toClient = function() {
   const obj = this.toObject();
+  const isList = typeof obj.itemsUpdatedAt !== undefined;
+
+  if (isList) {
+    obj.updatedAt = obj.updatedAt > obj.itemsUpdatedAt ? obj.updatedAt : obj.itemsUpdatedAt;
+
+    delete obj.itemsUpdatedAt;
+  }
 
   obj.id = obj._id;
 
@@ -26,6 +33,9 @@ exports.listToClientPopulated = function(isDeletedInclude = false) {
     obj.items = obj.items.filter(item => !item.deletedAt);
   }
 
+  obj.updatedAt = obj.updatedAt > obj.itemsUpdatedAt ? obj.updatedAt : obj.itemsUpdatedAt;
+
+  delete obj.itemsUpdatedAt;
   delete obj._id;
   delete obj.__v;
 
