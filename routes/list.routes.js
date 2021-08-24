@@ -14,6 +14,7 @@ module.exports = function(app) {
   app.get('/api/lists', [authJwt.verifyToken], controller.getListsForCurrentUser);
 
   app.get('/api/list/:id', [
+      authJwt.verifyToken,
       authJwt.getUserId,
       verifyList.isListExist,
     ],
@@ -30,7 +31,7 @@ module.exports = function(app) {
   app.post(
     '/api/list/add',
     [
-      body('name').exists().isString().notEmpty(),
+      body('title').exists().isString().notEmpty(),
       body('isPrivate').if(body('isPrivate').exists()).isBoolean(),
       validation.verifyBasicValidation,
       authJwt.verifyToken,
@@ -45,13 +46,13 @@ module.exports = function(app) {
       body('isPrivate').if(body('isPrivate').exists()).isBoolean(),
       body('categories').if(body('categories').exists()).isArray(),
       body('tags').if(body('tags').exists()).isArray(),
-      body('name').if(body('name').exists()).isString().notEmpty(),
+      body('title').if(body('title').exists()).isString().notEmpty(),
       oneOf([
         body('isPrivate').exists(),
         body('categories').exists(),
         body('tags').exists(),
-        body('name').exists(),
-      ], 'At least one field to change is required (name, isPrivate, tags, categories, name)'),
+        body('title').exists(),
+      ], 'At least one field to change is required (title, isPrivate, tags, categories)'),
       validation.verifyBasicValidation,
       authJwt.verifyToken,
       verifyList.isListBelongToUser,
