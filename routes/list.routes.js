@@ -105,4 +105,16 @@ module.exports = function(app) {
     ],
     controller.hardDeleteList,
   );
+
+  app.patch(
+    '/api/list/set-order/:listid',
+    [
+      authJwt.verifyToken,
+      verifyList.isListBelongToUser,
+      param('listid').isString(),
+      body('itemIds').exists().isArray(),
+      validation.verifyBasicValidation,
+    ],
+    controller.setOrderOfItems,
+  )
 };

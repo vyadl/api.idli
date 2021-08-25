@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const db = require('../models');
 const User = db.user;
 const List = require('../models/list.model');
@@ -8,6 +9,34 @@ const {
   getFieldsWithIds,
 } = require('./actions/list.actions');
 const { list } = require('../models');
+
+exports.setOrderOfItems = async (req, res) => {
+  const { listid: listId } = req.params;
+  const { itemIds } = req.body;
+  const now = new Date();
+
+  try {
+    const list = await List.findById(listId);
+    const oldItemIdsSorted = [...list.items].sort().map(item => item.toString());
+    const newItemIdsSorted = [...itemIds].sort();
+    const isValidItemIdsArray = oldItemIdsSorted.every((itemId, i) => itemId === newItemIdsSorted[i]);
+
+    if (!isValidItemIdsArray) {
+      return res.status(400).send({ message: 'There are not correct items' });
+    }
+
+    list.items = itemIds.map(itemId => (mongoose.Types.ObjectId(itemId)));
+    list.itemsUpdatedAt = now;
+
+    await list.save();
+    
+    const populatedList = await List.findById(listId).populate('items');
+
+    res.status(200).send(populatedList.listToClientPopulated());
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
+};
 
 exports.getListsForCurrentUser = (req, res) => {
   List.find({
