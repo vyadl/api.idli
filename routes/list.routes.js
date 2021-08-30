@@ -115,7 +115,7 @@ module.exports = function(app) {
       body('itemIds').exists().isArray(),
       validation.verifyBasicValidation,
     ],
-    controller.setOrderOfItems,
+    controller.setItemsOrder,
   );
 
   app.patch(

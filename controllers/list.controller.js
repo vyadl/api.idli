@@ -11,7 +11,7 @@ const {
 const { list } = require('../models');
 const { getFormattedDate } = require('./../utils/utils');
 
-exports.setOrderOfItems = async (req, res) => {
+exports.setItemsOrder = async (req, res) => {
   const { listid: listId } = req.params;
   const { itemIds } = req.body;
   const now = new Date();
