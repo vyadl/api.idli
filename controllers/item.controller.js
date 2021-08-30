@@ -206,6 +206,7 @@ exports.restoreItem = (req, res) => {
             res.status(200).send({
               message: 'The item is successfully restored',
               isListDeleted: !!list.deletedAt,
+              listTitle: !!list.deletedAt ? list.title : null,
             });
           })
         });

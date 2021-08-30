@@ -35,8 +35,23 @@ const listToClientPopulated = function(isDeletedInclude = false) {
   return obj;
 };
 
+const getFormattedDate = (date) => {
+  const options = {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: false,
+  };
+
+  return new Intl.DateTimeFormat('en', options).format(date);
+};
+
 module.exports = {
   checkIsSomethingDeletedByIds,
   toClient,
   listToClientPopulated,
-}
+  getFormattedDate,
+};

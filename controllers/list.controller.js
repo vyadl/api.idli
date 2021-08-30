@@ -9,6 +9,7 @@ const {
   getFieldsWithIds,
 } = require('./actions/list.actions');
 const { list } = require('../models');
+const { getFormattedDate } = require('./../utils/utils');
 
 exports.setOrderOfItems = async (req, res) => {
   const { listid: listId } = req.params;
@@ -220,19 +221,28 @@ exports.softDeleteList = async (req, res) => {
   }
 };
 
-exports.restoreList = (req, res) => {
-  List.findById(req.params.listid)
-    .exec((err, list) => {
-      resolve500Error(err, req, res);
+exports.restoreList = async (req, res) => {
+  // try {
+    const listForRestore = await List.findById(req.params.listid);
+    const isListWithSameTitleExist = !!(await List.find({
+      userId: req.userId,
+      title: listForRestore.title,
+      deletedAt: null,
+    })).length;
 
-      list.deletedAt = null;
+    listForRestore.deletedAt = null;
 
-      list.save(err => {
-        resolve500Error(err, req, res);
+    if (isListWithSameTitleExist) {
+      listForRestore.title =
+        `${listForRestore.title} (restored at ${getFormattedDate(new Date())})`;
+    }
 
-        res.status(200).send({ message: 'The list is successfully restored' });
-      })
-    });
+    await listForRestore.save();
+
+    res.status(200).send({ message: 'The list is successfully restored' });
+  // } catch(err) {
+  //   resolve500Error(err, req, res);
+  // }
 };
 
 exports.getDeletedLists = (req, res) => {

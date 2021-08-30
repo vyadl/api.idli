@@ -80,7 +80,7 @@ module.exports = function(app) {
     controller.hardDeleteList,
   );
 
-  app.post(
+  app.patch(
     '/api/list/restore/:listid',
     [
       authJwt.verifyToken,
