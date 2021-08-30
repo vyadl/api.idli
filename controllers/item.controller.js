@@ -98,6 +98,7 @@ exports.addManyItems = async (req, res) => {
   const preparedItems = items.map(({ title, details, tags, category }) => ({
       listId,
       title,
+      userId: req.userId,
       details: details || '',
       tags: tags || [],
       category: category || null,
