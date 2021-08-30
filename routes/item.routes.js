@@ -101,4 +101,29 @@ module.exports = function(app) {
     ],
     controller.hardDeleteItem,
   );
+
+  app.delete(
+    '/api/item/hard-delete/:listid/:id',
+    [
+      authJwt.verifyToken,
+      verifyList.isListBelongToUser,
+    ],
+    controller.hardDeleteItem,
+  );
+
+  app.delete(
+    '/api/item/hard-delete-all',
+    [
+      authJwt.verifyToken,
+    ],
+    controller.hardDeleteAllItems,
+  );
+
+  app.patch(
+    '/api/item/restore-all',
+    [
+      authJwt.verifyToken,
+    ],
+    controller.restoreAllItems,
+  );
 };

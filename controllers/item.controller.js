@@ -62,6 +62,7 @@ exports.addItem = async (req, res) => {
   const item = new Item({
     listId,
     title,
+    userId: req.userId,
     details: details || '',
     tags: tags || [],
     category: category || null,
@@ -250,4 +251,12 @@ exports.hardDeleteItem = (req, res) => {
       });
     });
   });
+};
+
+exports.hardDeleteAllItems = (req, res) => {
+  // Item.find({ u })
+};
+
+exports.restoreAllItems = (req, res) => {
+
 };

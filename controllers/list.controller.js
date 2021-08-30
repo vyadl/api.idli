@@ -273,3 +273,11 @@ exports.hardDeleteList = (req, res) => {
       });
     });
 };
+
+exports.hardDeleteAllLists = (req, res) => {
+  
+};
+
+exports.restoreAllLists = (req, res) => {
+
+};
