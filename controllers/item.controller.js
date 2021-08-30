@@ -208,7 +208,7 @@ exports.restoreItem = (req, res) => {
             res.status(200).send({
               message: 'The item is successfully restored',
               isListDeleted: !!list.deletedAt,
-              listTitle: !!list.deletedAt ? list.title : null,
+              listTitle: list.deletedAt ? list.title : null,
             });
           })
         });
@@ -255,12 +255,16 @@ exports.hardDeleteItem = (req, res) => {
 };
 
 exports.hardDeleteAllItems = async (req, res) => {
-  await Item.deleteMany({
-    userId: req.userId,
-    deletedAt: { $ne: null },
-  });
+  try {
+    await Item.deleteMany({
+      userId: req.userId,
+      deletedAt: { $ne: null },
+    });
 
-  res.status(200).send({ message: 'All items are permanently deleted' });
+    res.status(200).send({ message: 'All items are permanently deleted' });
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
 
 exports.restoreAllItems = async (req, res) => {
