@@ -222,7 +222,7 @@ exports.softDeleteList = async (req, res) => {
 };
 
 exports.restoreList = async (req, res) => {
-  // try {
+  try {
     const listForRestore = await List.findById(req.params.listid);
     const isListWithSameTitleExist = !!(await List.find({
       userId: req.userId,
@@ -240,9 +240,9 @@ exports.restoreList = async (req, res) => {
     await listForRestore.save();
 
     res.status(200).send({ message: 'The list is successfully restored' });
-  // } catch(err) {
-  //   resolve500Error(err, req, res);
-  // }
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
 
 exports.getDeletedLists = (req, res) => {
@@ -274,10 +274,33 @@ exports.hardDeleteList = (req, res) => {
     });
 };
 
-exports.hardDeleteAllLists = (req, res) => {
-  
+exports.hardDeleteAllLists = async (req, res) => {
+  try {
+    await List.deleteMany({
+      userId: req.userId,
+      deletedAt: { $ne: null },
+    });
+
+    res.status(200).send({ message: 'All lists are permanently deleted' })
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
 
-exports.restoreAllLists = (req, res) => {
+exports.restoreAllLists = async(req, res) => {
+  try {
+    await List.updateMany(
+      { 
+        userId: req.userId,
+        deletedAt: { $ne: null },
+      },
+      {
+        $set: { 'deletedAt': null },
+      }
+    );
 
+    res.status(200).send({ message: 'All lists are successfully restored' })
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };

@@ -130,7 +130,6 @@ module.exports = function(app) {
     '/api/list/hard-delete-all',
     [
       authJwt.verifyToken,
-      verifyList.isListBelongToUser,
     ],
     controller.hardDeleteAllLists,
   );

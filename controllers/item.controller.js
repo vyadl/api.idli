@@ -254,10 +254,40 @@ exports.hardDeleteItem = (req, res) => {
   });
 };
 
-exports.hardDeleteAllItems = (req, res) => {
-  // Item.find({ u })
+exports.hardDeleteAllItems = async (req, res) => {
+  await Item.deleteMany({
+    userId: req.userId,
+    deletedAt: { $ne: null },
+  });
+
+  res.status(200).send({ message: 'All items are permanently deleted' });
 };
 
-exports.restoreAllItems = (req, res) => {
+exports.restoreAllItems = async (req, res) => {
+  try {
+    const items = await Item.find({ userId: req.userId, deletedAt: { $ne: null } });
+    const itemsListIds = items.map(item => item.listId);
+    const updatingResult = await Item.updateMany(
+      { 
+        userId: req.userId,
+        deletedAt: { $ne: null },
+      },
+      {
+        $set: { 'deletedAt': null },
+      },
+    );
+    const deletedListsWithRestoredItems = await List.find({
+      userId: req.userId,
+      deletedAt: { $ne: null },
+      _id: { $in: itemsListIds },
+    });
+    const listsTitlesArray = deletedListsWithRestoredItems.map(list => list.title);
 
+    res.status(200).send({
+      listsTitlesArray,
+      message: 'All items are successfully restored',
+    })
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
