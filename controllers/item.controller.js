@@ -3,7 +3,7 @@ const User = db.user;
 const List = require('./../models/list.model');
 const Item = require('./../models/item.model');
 const { resolve500Error } = require('./../middlewares/validation');
-const VALID_KEYS_FOR_UPDATE = ['text', 'details', 'tags', 'category'];
+const VALID_KEYS_FOR_UPDATE = ['title', 'details', 'tags', 'category'];
 
 
 exports.getItem = (req, res) => {
@@ -47,11 +47,11 @@ exports.getItem = (req, res) => {
 };
 
 exports.addItem = async (req, res) => {
-  const { text, details, tags, category } = req.body;
+  const { title, details, tags, category } = req.body;
   const { listid: listId } = req.params;
 
-  if (!text) {
-    res.status(400).send({ message: 'Text is required' });
+  if (!title) {
+    res.status(400).send({ message: 'Title is required' });
   }
 
   if (!listId) {
@@ -61,7 +61,8 @@ exports.addItem = async (req, res) => {
   const now = new Date();
   const item = new Item({
     listId,
-    text: text,
+    title,
+    userId: req.userId,
     details: details || '',
     tags: tags || [],
     category: category || null,
@@ -71,20 +72,20 @@ exports.addItem = async (req, res) => {
   });
 
   try {
-  List.findById(listId).exec((err, list) => {
-    list.items.push(item);
-    list.itemsUpdatedAt = now;
+    List.findById(listId).exec((err, list) => {
+      list.items.push(item);
+      list.itemsUpdatedAt = now;
 
-    item.save(err => {
-      resolve500Error(err, req, res);
-
-      list.save((err, list) => {
+      item.save(err => {
         resolve500Error(err, req, res);
-    
-        res.status(200).send(item.toClient());
+
+        list.save((err, list) => {
+          resolve500Error(err, req, res);
+      
+          res.status(200).send(item.toClient());
+        });
       });
     });
-  });
   } catch(err) {
     resolve500Error(err, req, res);
   }
@@ -94,9 +95,10 @@ exports.addManyItems = async (req, res) => {
   const { listid: listId } = req.params;
   const { items } = req.body;
   const now = new Date();
-  const preparedItems = items.map(({ text, details, tags, category }) => ({
+  const preparedItems = items.map(({ title, details, tags, category }) => ({
       listId,
-      text: text,
+      title,
+      userId: req.userId,
       details: details || '',
       tags: tags || [],
       category: category || null,
@@ -206,6 +208,7 @@ exports.restoreItem = (req, res) => {
             res.status(200).send({
               message: 'The item is successfully restored',
               isListDeleted: !!list.deletedAt,
+              listTitle: list.deletedAt ? list.title : null,
             });
           })
         });
@@ -249,4 +252,46 @@ exports.hardDeleteItem = (req, res) => {
       });
     });
   });
+};
+
+exports.hardDeleteAllItems = async (req, res) => {
+  try {
+    await Item.deleteMany({
+      userId: req.userId,
+      deletedAt: { $ne: null },
+    });
+
+    res.status(200).send({ message: 'All items are permanently deleted' });
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
+};
+
+exports.restoreAllItems = async (req, res) => {
+  try {
+    const items = await Item.find({ userId: req.userId, deletedAt: { $ne: null } });
+    const itemsListIds = items.map(item => item.listId);
+    const updatingResult = await Item.updateMany(
+      { 
+        userId: req.userId,
+        deletedAt: { $ne: null },
+      },
+      {
+        $set: { 'deletedAt': null },
+      },
+    );
+    const deletedListsWithRestoredItems = await List.find({
+      userId: req.userId,
+      deletedAt: { $ne: null },
+      _id: { $in: itemsListIds },
+    });
+    const listsTitlesArray = deletedListsWithRestoredItems.map(list => list.title);
+
+    res.status(200).send({
+      listsTitlesArray,
+      message: 'All items are successfully restored',
+    })
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };

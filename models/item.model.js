@@ -3,7 +3,8 @@ const { toClient } = require('./../utils/utils');
 
 const schema = new mongoose.Schema({
   listId: String,
-  text: String,
+  userId: String,
+  title: String,
   details: String,
   tags: Array,
   category: Number,

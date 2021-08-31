@@ -25,7 +25,7 @@ module.exports = function(app) {
     '/api/item/add/:listid',
     [
       authJwt.verifyToken,
-      body('text').exists().isString().notEmpty(),
+      body('title').exists().isString().notEmpty(),
       body('details').if(body('details').exists()).isString(),
       validation.verifyBasicValidation,
       verifyList.isListBelongToUser,
@@ -52,15 +52,15 @@ module.exports = function(app) {
     [
       authJwt.verifyToken,
       param('listid').isString(),
-      body('text').if(body('text').exists()).isString().notEmpty(),
+      body('title').if(body('title').exists()).isString().notEmpty(),
       body('details').if(body('details').exists()).isString(),
       body('tags').if(body('tags').exists()).isArray(),
       oneOf([
-        body('text').exists(),
+        body('title').exists(),
         body('details').exists(),
         body('category').exists(),
         body('tags').exists(),
-      ], 'At least one field to change is required (text, details, category, tags)'),
+      ], 'At least one field to change is required (title, details, category, tags)'),
       validation.verifyBasicValidation,
       verifyList.isListBelongToUser,
       verifyList.isListExist,
@@ -78,7 +78,7 @@ module.exports = function(app) {
     controller.softDeleteItem,
   );
 
-  app.post(
+  app.patch(
     '/api/item/restore/:listid/:id',
     [
       authJwt.verifyToken,
@@ -94,11 +94,36 @@ module.exports = function(app) {
   );
 
   app.delete(
-    '/api/item/delete/:listid/:id',
+    '/api/item/hard-delete/:listid/:id',
     [
       authJwt.verifyToken,
       verifyList.isListBelongToUser,
     ],
     controller.hardDeleteItem,
+  );
+
+  app.delete(
+    '/api/item/hard-delete/:listid/:id',
+    [
+      authJwt.verifyToken,
+      verifyList.isListBelongToUser,
+    ],
+    controller.hardDeleteItem,
+  );
+
+  app.delete(
+    '/api/item/hard-delete-all',
+    [
+      authJwt.verifyToken,
+    ],
+    controller.hardDeleteAllItems,
+  );
+
+  app.patch(
+    '/api/item/restore-all',
+    [
+      authJwt.verifyToken,
+    ],
+    controller.restoreAllItems,
   );
 };

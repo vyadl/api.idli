@@ -3,7 +3,7 @@ const { toClient, listToClientPopulated } = require('./../utils/utils');
 
 const schema = new mongoose.Schema({
   userId: String,
-  name: String,
+  title: String,
   isPrivate: Boolean,
   tags: Array,
   categories: Array,
