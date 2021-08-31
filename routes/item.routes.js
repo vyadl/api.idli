@@ -78,7 +78,7 @@ module.exports = function(app) {
     controller.softDeleteItem,
   );
 
-  app.post(
+  app.patch(
     '/api/item/restore/:listid/:id',
     [
       authJwt.verifyToken,
@@ -94,11 +94,36 @@ module.exports = function(app) {
   );
 
   app.delete(
-    '/api/item/delete/:listid/:id',
+    '/api/item/hard-delete/:listid/:id',
     [
       authJwt.verifyToken,
       verifyList.isListBelongToUser,
     ],
     controller.hardDeleteItem,
+  );
+
+  app.delete(
+    '/api/item/hard-delete/:listid/:id',
+    [
+      authJwt.verifyToken,
+      verifyList.isListBelongToUser,
+    ],
+    controller.hardDeleteItem,
+  );
+
+  app.delete(
+    '/api/item/hard-delete-all',
+    [
+      authJwt.verifyToken,
+    ],
+    controller.hardDeleteAllItems,
+  );
+
+  app.patch(
+    '/api/item/restore-all',
+    [
+      authJwt.verifyToken,
+    ],
+    controller.restoreAllItems,
   );
 };

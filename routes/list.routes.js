@@ -80,7 +80,7 @@ module.exports = function(app) {
     controller.hardDeleteList,
   );
 
-  app.post(
+  app.patch(
     '/api/list/restore/:listid',
     [
       authJwt.verifyToken,
@@ -104,5 +104,33 @@ module.exports = function(app) {
       verifyList.isListBelongToUser,
     ],
     controller.hardDeleteList,
+  );
+
+  app.patch(
+    '/api/list/set-order/:listid',
+    [
+      authJwt.verifyToken,
+      verifyList.isListBelongToUser,
+      param('listid').isString(),
+      body('itemIds').exists().isArray(),
+      validation.verifyBasicValidation,
+    ],
+    controller.setItemsOrder,
+  );
+
+  app.patch(
+    '/api/list/restore-all',
+    [
+      authJwt.verifyToken,
+    ],
+    controller.restoreAllLists,
+  );
+
+  app.delete(
+    '/api/list/hard-delete-all',
+    [
+      authJwt.verifyToken,
+    ],
+    controller.hardDeleteAllLists,
   );
 };

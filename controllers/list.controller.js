@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const db = require('../models');
 const User = db.user;
 const List = require('../models/list.model');
@@ -8,6 +9,35 @@ const {
   getFieldsWithIds,
 } = require('./actions/list.actions');
 const { list } = require('../models');
+const { getFormattedDate } = require('./../utils/utils');
+
+exports.setItemsOrder = async (req, res) => {
+  const { listid: listId } = req.params;
+  const { itemIds } = req.body;
+  const now = new Date();
+
+  try {
+    const list = await List.findById(listId);
+    const oldItemIdsSorted = [...list.items].sort().map(item => item.toString());
+    const newItemIdsSorted = [...itemIds].sort();
+    const isValidItemIdsArray = oldItemIdsSorted.every((itemId, i) => itemId === newItemIdsSorted[i]);
+
+    if (!isValidItemIdsArray) {
+      return res.status(400).send({ message: 'There are not correct items' });
+    }
+
+    list.items = itemIds.map(itemId => (mongoose.Types.ObjectId(itemId)));
+    list.itemsUpdatedAt = now;
+
+    await list.save();
+    
+    const populatedList = await List.findById(listId).populate('items');
+
+    res.status(200).send(populatedList.listToClientPopulated());
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
+};
 
 exports.getListsForCurrentUser = (req, res) => {
   List.find({
@@ -191,19 +221,28 @@ exports.softDeleteList = async (req, res) => {
   }
 };
 
-exports.restoreList = (req, res) => {
-  List.findById(req.params.listid)
-    .exec((err, list) => {
-      resolve500Error(err, req, res);
+exports.restoreList = async (req, res) => {
+  try {
+    const listForRestore = await List.findById(req.params.listid);
+    const isListWithSameTitleExist = !!(await List.find({
+      userId: req.userId,
+      title: listForRestore.title,
+      deletedAt: null,
+    })).length;
 
-      list.deletedAt = null;
+    listForRestore.deletedAt = null;
 
-      list.save(err => {
-        resolve500Error(err, req, res);
+    if (isListWithSameTitleExist) {
+      listForRestore.title =
+        `${listForRestore.title} (restored at ${getFormattedDate(new Date())})`;
+    }
 
-        res.status(200).send({ message: 'The list is successfully restored' });
-      })
-    });
+    await listForRestore.save();
+
+    res.status(200).send({ message: 'The list is successfully restored' });
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
 
 exports.getDeletedLists = (req, res) => {
@@ -233,4 +272,35 @@ exports.hardDeleteList = (req, res) => {
         })
       });
     });
+};
+
+exports.hardDeleteAllLists = async (req, res) => {
+  try {
+    await List.deleteMany({
+      userId: req.userId,
+      deletedAt: { $ne: null },
+    });
+
+    res.status(200).send({ message: 'All lists are permanently deleted' })
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
+};
+
+exports.restoreAllLists = async(req, res) => {
+  try {
+    await List.updateMany(
+      { 
+        userId: req.userId,
+        deletedAt: { $ne: null },
+      },
+      {
+        $set: { 'deletedAt': null },
+      }
+    );
+
+    res.status(200).send({ message: 'All lists are successfully restored' })
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };

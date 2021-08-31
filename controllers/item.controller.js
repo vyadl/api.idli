@@ -62,6 +62,7 @@ exports.addItem = async (req, res) => {
   const item = new Item({
     listId,
     title,
+    userId: req.userId,
     details: details || '',
     tags: tags || [],
     category: category || null,
@@ -97,6 +98,7 @@ exports.addManyItems = async (req, res) => {
   const preparedItems = items.map(({ title, details, tags, category }) => ({
       listId,
       title,
+      userId: req.userId,
       details: details || '',
       tags: tags || [],
       category: category || null,
@@ -206,6 +208,7 @@ exports.restoreItem = (req, res) => {
             res.status(200).send({
               message: 'The item is successfully restored',
               isListDeleted: !!list.deletedAt,
+              listTitle: list.deletedAt ? list.title : null,
             });
           })
         });
@@ -249,4 +252,46 @@ exports.hardDeleteItem = (req, res) => {
       });
     });
   });
+};
+
+exports.hardDeleteAllItems = async (req, res) => {
+  try {
+    await Item.deleteMany({
+      userId: req.userId,
+      deletedAt: { $ne: null },
+    });
+
+    res.status(200).send({ message: 'All items are permanently deleted' });
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
+};
+
+exports.restoreAllItems = async (req, res) => {
+  try {
+    const items = await Item.find({ userId: req.userId, deletedAt: { $ne: null } });
+    const itemsListIds = items.map(item => item.listId);
+    const updatingResult = await Item.updateMany(
+      { 
+        userId: req.userId,
+        deletedAt: { $ne: null },
+      },
+      {
+        $set: { 'deletedAt': null },
+      },
+    );
+    const deletedListsWithRestoredItems = await List.find({
+      userId: req.userId,
+      deletedAt: { $ne: null },
+      _id: { $in: itemsListIds },
+    });
+    const listsTitlesArray = deletedListsWithRestoredItems.map(list => list.title);
+
+    res.status(200).send({
+      listsTitlesArray,
+      message: 'All items are successfully restored',
+    })
+  } catch(err) {
+    resolve500Error(err, req, res);
+  }
 };
