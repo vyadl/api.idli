@@ -155,7 +155,7 @@ exports.updateItem = async (req, res) => {
     });
 
     item.updatedAt = now;
-    
+
     const updatedItem = await item.save();
 
     list.itemsUpdatedAt = now;
