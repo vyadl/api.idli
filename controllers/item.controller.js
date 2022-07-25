@@ -160,7 +160,7 @@ exports.updateItem = async (req, res) => {
 
     list.itemsUpdatedAt = now;
 
-    const updatedList = await list.save();
+    await list.save();
 
     res.status(200).send(updatedItem.toClient());
   } catch(err) {

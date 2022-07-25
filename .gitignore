@@ -1,14 +1,10 @@
-# Compiled binary addons (https://nodejs.org/api/addons.html)
-build/Release
-
-# Dependency directories
+.DS_Store
 node_modules/
 tmp/
-
-# dotenv environment variables file
 .env
-.env.test
 
-package-lock.json
-
+# for server
 .htaccess
+.htaccess.save
+.well-known
+stderr.log
