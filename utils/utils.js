@@ -7,7 +7,7 @@ const checkIsSomethingDeletedByIds = (oldObj, newObj) => {
 
 const toClient = function() {
   const obj = this.toObject();
-  const isList = typeof obj.itemsUpdatedAt !== undefined;
+  const isList = typeof obj.itemsUpdatedAt !== 'undefined';
 
   if (isList) {
     obj.updatedAt = obj.updatedAt > obj.itemsUpdatedAt ? obj.updatedAt : obj.itemsUpdatedAt;
