@@ -15,8 +15,15 @@ const createApp = async () => {
 
   app.use(cors(corsOptions));
   app.options('*', cors());
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(bodyParser.json({
+    parameterLimit: 100000,
+    limit: '50mb',
+  }));
+  app.use(bodyParser.urlencoded({
+    parameterLimit: 100000,
+    limit: '50mb',
+    extended: true,
+  }));
 
   app.get('/', (req, res) => {
     res.json({ message: 'Welcome to idli application' })
