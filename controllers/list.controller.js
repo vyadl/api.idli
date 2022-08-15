@@ -8,7 +8,11 @@ const {
   removeDeletedTagsAndCategoriesFromItems,
   getFieldsWithIds,
 } = require('./actions/list.actions');
-const { list } = require('../models');
+const {
+  deleteRelatedAndReferringRecordsForBatchItemsDeleting,
+  deleteReferringItemsforBatchListDeleting,
+  deleteReferringItemsInDeletingList,
+} = require('./actions/relatedRecords.actions');
 const { getFormattedDate } = require('./../utils/utils');
 
 exports.setItemsOrder = async (req, res) => {
@@ -30,8 +34,15 @@ exports.setItemsOrder = async (req, res) => {
     list.itemsUpdatedAt = now;
 
     await list.save();
-    
-    const populatedList = await List.findById(listId).populate('items');
+
+    const populatedList = await List.findById(listId).populate({
+      path: 'items',
+      populate: 'items',
+    },
+    {
+      path: 'referringItems',
+      populate: 'items',
+    });
 
     res.status(200).send(populatedList.listToClientPopulated());
   } catch(err) {
@@ -76,10 +87,11 @@ exports.getPublicListsByUserId = (req, res) => {
   });
 };
 
-exports.getList = (req, res) => {
-  List.findById(req.params.id)
-    .populate('items', '-__v')
-    .exec((err, list) => {
+exports.getList = async (req, res) => {
+  const list = await List.findById(req.params.id);
+
+  List.findById(req.params.id).populate('items referringItems')
+    .exec(async (err, list) => {
       resolve500Error(err, req, res);
 
       if (!list) {
@@ -90,15 +102,11 @@ exports.getList = (req, res) => {
         return res.status(410).send({ message: 'The list is deleted' });
       }
 
-      if (!list.isPrivate) {
-        res.status(200).send(list.listToClientPopulated());
-      } else {
-        if (!req.userId || req.userId !== list.userId) {
-          res.status(400).send({ message: 'List is private' });
-        } else {
-          return res.status(200).send(list.listToClientPopulated());
-        }
+      if (list.isPrivate && (!req.userId || req.userId !== list.userId)) {
+        return res.status(400).send({ message: 'List is private' });
       }
+
+      res.status(200).send(list.listToClientPopulated());
   });
 }
 
@@ -199,7 +207,14 @@ exports.updateList = async (req, res) => {
 
     await removeDeletedTagsAndCategoriesFromItems({ list: oldList, req, res });
 
-    const populatedList = await List.findById(updatedList._id).populate('items');
+    const populatedList = await List.findById(updatedList._id).populate({
+      path: 'items',
+      populate: 'items',
+    },
+    {
+      path: 'referringItems',
+      populate: 'items',
+    });
 
     return res.status(200).send(populatedList.listToClientPopulated());
   } catch(err) {
@@ -261,11 +276,14 @@ exports.getDeletedLists = (req, res) => {
 
 exports.hardDeleteList = (req, res) => {
   List.findById(req.params.listid)
-    .exec((err, list) => {
+    .exec(async (err, list) => {
       resolve500Error(err, req, res);
 
+      await deleteRelatedAndReferringRecordsForBatchItemsDeleting(list.items.map(id => String(id)));
+      await deleteReferringItemsInDeletingList(list._id);
+
       Item.deleteMany({ _id: { $in: list.items }}, (err, result) => {
-        list.remove((err, result) => {
+        list.remove(err => {
           resolve500Error(err, req, res);
 
           res.status(200).send({ message: 'The list is successfully deleted' });
@@ -276,6 +294,17 @@ exports.hardDeleteList = (req, res) => {
 
 exports.hardDeleteAllLists = async (req, res) => {
   try {
+    const lists = await List.find({
+      userId: req.userId,
+      deletedAt: { $ne: null },
+    });
+
+    itemsForDeleting = lists.reduce((result, list) => [...result, ...list.items], []);
+
+    await deleteRelatedAndReferringRecordsForBatchItemsDeleting(itemsForDeleting.map(id => String(id)));
+    await deleteReferringItemsforBatchListDeleting(lists.map(list => String(list._id)));
+    
+    await Item.deleteMany({ _id: { $in: itemsForDeleting }});
     await List.deleteMany({
       userId: req.userId,
       deletedAt: { $ne: null },

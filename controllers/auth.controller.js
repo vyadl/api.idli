@@ -75,14 +75,14 @@ exports.signin = (req, res) => {
         return res.status(410).send({
           accessToken: null,
           message: 'User was deleted',
-        })
+        });
       }
 
       if (!isPasswordValid) {
         return res.status(404).send({
           accessToken: null,
           message: 'Invalid credentials',
-        })
+        });
       }
 
       const token = jwt.sign(

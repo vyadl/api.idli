@@ -49,9 +49,37 @@ const getFormattedDate = (date) => {
   return new Intl.DateTimeFormat('en', options).format(date);
 };
 
+const getDifferenceForChangedArray = (arrayBefore, arrayAfter) => {
+  const [setBefore, setAfter] = [
+    new Set(arrayBefore.map(item => String(item))),
+    new Set(arrayAfter.map(item => String(item))),
+  ];
+  const deletedItems = [];
+  const newItems = [];
+
+  for (const value of setBefore) {
+    if (!setAfter.has(value)) {
+      deletedItems.push(value);
+    }
+  }
+
+  for (const value of setAfter) {
+    if (!setBefore.has(value)) {
+      newItems.push(value);
+    }
+  }
+
+  return {
+    deleted: new Set(deletedItems),
+    new: new Set(newItems),
+    all: new Set([...deletedItems, ...newItems]),
+  }
+}
+
 module.exports = {
   checkIsSomethingDeletedByIds,
   toClient,
   listToClientPopulated,
   getFormattedDate,
+  getDifferenceForChangedArray,
 };

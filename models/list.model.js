@@ -2,7 +2,10 @@ const mongoose = require('mongoose');
 const { toClient, listToClientPopulated } = require('./../utils/utils');
 
 const schema = new mongoose.Schema({
-  userId: String,
+  userId: {
+    type: String,
+    index: true,
+  },
   title: String,
   isPrivate: Boolean,
   tags: Array,
@@ -17,6 +20,13 @@ const schema = new mongoose.Schema({
       ref: 'Item',
     },
   ],
+  referringItems: {
+    type: [{
+      type: 'ObjectId',
+      ref: 'Item',
+    }],
+    default: null,
+  },
 });
 
 schema.method('toClient', toClient);
