@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { toClient } = require('./../utils/utils');
+const { toClient, itemToClientPopulated } = require('./../utils/utils');
 
 const schema = new mongoose.Schema({
   listId: {
@@ -41,6 +41,7 @@ const schema = new mongoose.Schema({
 });
 
 schema.method('toClient', toClient);
+schema.method('itemToClientPopulated', itemToClientPopulated);
 
 schema.pre('save', function(next) {
   convertItemsIdsToMongooseIds.call(this);

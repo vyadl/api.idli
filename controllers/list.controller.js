@@ -37,11 +37,11 @@ exports.setItemsOrder = async (req, res) => {
 
     const populatedList = await List.findById(listId).populate({
       path: 'items',
-      populate: 'items',
+      model: Item,
     },
     {
       path: 'referringItems',
-      populate: 'items',
+      model: Item,
     });
 
     res.status(200).send(populatedList.listToClientPopulated());

@@ -8,7 +8,14 @@ const {
   deleteRelatedAndReferringRecordsForBatchItemsDeleting,
   handleChangingRelatedRecords,
 } = require('./actions/relatedRecords.actions');
-const VALID_KEYS_FOR_UPDATE = ['title', 'details', 'tags', 'category', 'relatedItems', 'relatedLists'];
+const VALID_KEYS_FOR_UPDATE = [
+  'title',
+  'details',
+  'tags',
+  'category',
+  'relatedItems',
+  'relatedLists',
+];
 
 
 exports.getItem = async (req, res) => {
@@ -41,6 +48,10 @@ exports.getItem = async (req, res) => {
       {
         path: 'relatedLists',
         model: List,
+      },
+      {
+        path: 'referringItems',
+        model: Item,
       }]);
       
       if (!item) {
@@ -51,7 +62,7 @@ exports.getItem = async (req, res) => {
         return res.status(410).send({ message: 'This item is deleted' });
       }
 
-      res.status(200).send(item.toClient());
+      res.status(200).send(item.itemToClientPopulated());
     });
   });
 };

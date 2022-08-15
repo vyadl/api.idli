@@ -1,6 +1,6 @@
 const { getDifferenceForChangedArray } = require('./../../utils/utils');
-const Item = require('../../models/item.model');
-const List = require('../../models/list.model');
+const Item = require('./../../models/item.model');
+const List = require('./../../models/list.model');
 
 const deleteRelatedAndReferringRecordsForBatchItemsDeleting = async (itemIds) => {
   await Promise.all(itemIds.map(async id => {
@@ -57,7 +57,6 @@ const deleteRelatedRecords = async ({
   relatedItems,
   relatedLists,
 }) => {
-
   await handleChangingRelatedRecords({
     itemId,
     oldRelatedItems: relatedItems,
@@ -88,13 +87,11 @@ const handleChangingRelatedRecords = async ({
 
   await Promise.all([
     {
-      name: 'item',
       model: Item,
       collection: itemsForChange,
       differenceObj: relatedItemsDifference,
     },
     {
-      name: 'list',
       model: List,
       collection: listsForChange,
       differenceObj: relatedListsDifference,
@@ -105,7 +102,6 @@ const handleChangingRelatedRecords = async ({
       let isChanged = false;
 
       if (entity.differenceObj.deleted.has(String(record._id))) {
-        
         finalReferringItems = record.referringItems.filter(id => String(id) !== String(itemId));
 
         if (!finalReferringItems.length) {
@@ -119,7 +115,7 @@ const handleChangingRelatedRecords = async ({
         finalReferringItems = record.referringItems ? [...record.referringItems] : [];
         finalReferringItems.push(itemId);
 
-        isChanged = true
+        isChanged = true;
       }
 
       if (isChanged) {
@@ -164,7 +160,7 @@ const removeReferringItems = async ({
         filter: { _id: item._id },
         update: {
           $set: {
-            [relatedEntityName]: filteredRelatedIds,
+            [relatedEntityName]: filteredRelatedIds.length ? filteredRelatedIds : null,
           },
         },
       },

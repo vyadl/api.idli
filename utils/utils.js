@@ -26,11 +26,27 @@ const toClient = function() {
 const listToClientPopulated = function(isDeletedInclude = false) {
   const obj = toClient.call(this);
 
-  obj.items = this.items.map(item => item.toClient());
+  ['items', 'referringItems'].forEach(field => {
+    if (obj[field]?.length) {
+      obj[field] = this[field].map(item => item.toClient());
+    }
+  });
 
   if (!isDeletedInclude) {
     obj.items = obj.items.filter(item => !item.deletedAt);
   }
+
+  return obj;
+};
+
+const itemToClientPopulated = function() {
+  const obj = toClient.call(this);
+
+  ['relatedItems', 'relatedLists', 'referringItems'].forEach(field => {
+    if (obj[field]?.length) {
+      obj[field] = this[field].map(item => item.toClient());
+    }
+  })
 
   return obj;
 };
@@ -54,24 +70,24 @@ const getDifferenceForChangedArray = (arrayBefore, arrayAfter) => {
     new Set(arrayBefore.map(item => String(item))),
     new Set(arrayAfter.map(item => String(item))),
   ];
-  const deletedItems = [];
-  const newItems = [];
+  const deletedItems = new Set();
+  const newItems = new Set();
 
   for (const value of setBefore) {
     if (!setAfter.has(value)) {
-      deletedItems.push(value);
+      deletedItems.add(value);
     }
   }
 
   for (const value of setAfter) {
     if (!setBefore.has(value)) {
-      newItems.push(value);
+      newItems.add(value);
     }
   }
 
   return {
-    deleted: new Set(deletedItems),
-    new: new Set(newItems),
+    deleted: deletedItems,
+    new: newItems,
     all: new Set([...deletedItems, ...newItems]),
   }
 }
@@ -80,6 +96,7 @@ module.exports = {
   checkIsSomethingDeletedByIds,
   toClient,
   listToClientPopulated,
+  itemToClientPopulated,
   getFormattedDate,
   getDifferenceForChangedArray,
 };
