@@ -1,4 +1,5 @@
 const { getDifferenceForChangedArray } = require('./../../utils/utils');
+const { toObjectId } = require('./../../utils/databaseUtils');
 const Item = require('./../../models/item.model');
 const List = require('./../../models/list.model');
 
@@ -30,7 +31,7 @@ const deleteRelatedAndReferringRecordsForItem = async (payload) => {
       relatedLists: item.relatedLists,
     });
 
-    await removeReferringItems({
+    await deleteReferringItems({
       recordId: item._id,
       relatedEntityName: 'relatedItems',
       referringItemsIds: item.referringItems,
@@ -42,7 +43,7 @@ const deleteReferringItemsInDeletingList = async (listId) => {
   const list = await List.findById(listId);
 
   if (list.referringItems?.length) {
-    await removeReferringItems({
+    await deleteReferringItems({
       recordId: listId,
       relatedEntityName: 'relatedLists',
       referringItemsIds: list.referringItems,
@@ -75,14 +76,12 @@ const handleChangingRelatedRecords = async ({
 }) => {
   const relatedItemsDifference = getDifferenceForChangedArray(oldRelatedItems || [], relatedItems || []);
   const relatedListsDifference = getDifferenceForChangedArray(oldRelatedLists || [], relatedLists || []);
-
   const itemsForChange = relatedItemsDifference.all.size
-    ? await Item.find({ _id: { $in: Array.from(relatedItemsDifference.all) } })
+    ? await Item.find({ _id: { $in: toObjectId(Array.from(relatedItemsDifference.all)) } })
     : [];
   const listsForChange = relatedListsDifference.all.size
-    ? await List.find({ _id: { $in: Array.from(relatedListsDifference.all) } })
+    ? await List.find({ _id: { $in: toObjectId(Array.from(relatedListsDifference.all)) } })
     : [];
-
   const bulkUpdateOps = [];
 
   await Promise.all([
@@ -138,12 +137,12 @@ const handleChangingRelatedRecords = async ({
   }));
 }
 
-const removeReferringItems = async ({
+const deleteReferringItems = async ({
   relatedEntityName,
   recordId,
   referringItemsIds,
 }) => {
-  const referringItems = Item.find({ _id: { $in: referringItemsIds } });
+  const referringItems = await Item.find({ _id: { $in: toObjectId(referringItemsIds) } });
 
   if (!referringItems.length) {
     return Promise.resolve();

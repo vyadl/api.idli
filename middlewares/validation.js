@@ -14,8 +14,9 @@ exports.verifyBasicValidation = (req, res, next) => {
   next();
 };
 
-exports.resolve500Error = (err, req, res) => {
+exports.resolve500Error = (err, res) => {
   if (err) {
-    return res.status(500).send({ message: err });
+    console.log(err);
+    return res.status(500).send({ message: String(err) });
   }
 };

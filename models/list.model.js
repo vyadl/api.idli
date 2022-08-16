@@ -14,17 +14,9 @@ const schema = new mongoose.Schema({
   updatedAt: Date,
   deletedAt: Date,
   itemsUpdatedAt: Date,
-  items: [
-    {
-      type: 'ObjectId',
-      ref: 'Item',
-    },
-  ],
+  items: [String],
   referringItems: {
-    type: [{
-      type: 'ObjectId',
-      ref: 'Item',
-    }],
+    type: [String],
     default: null,
   },
 });

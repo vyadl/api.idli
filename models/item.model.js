@@ -18,56 +18,20 @@ const schema = new mongoose.Schema({
   updatedAt: Date,
   deletedAt: Date,
   relatedLists: {
-    type: [{
-      type: 'ObjectId',
-      ref: 'List',
-    }],
+    type: [String],
     default: null,
   },
   relatedItems: {
-    type: [{
-      type: 'ObjectId',
-      ref: 'Item',
-    }],
+    type: [String],
     default: null,
   },
   referringItems: {
-    type: [{
-      type: 'ObjectId',
-      ref: 'Item',
-    }],
+    type: [String],
     default: null,
   },
 });
 
 schema.method('toClient', toClient);
 schema.method('itemToClientPopulated', itemToClientPopulated);
-
-schema.pre('save', function(next) {
-  convertItemsIdsToMongooseIds.call(this);
-
-  next();
-});
-
-schema.pre('updateOne', function(next) {
-  convertItemsIdsToMongooseIds.call(this);
-
-  next();
-});
-
-function convertItemsIdsToMongooseIds() {
-  ['relatedItems', 'relatedLists', 'referringItems'].forEach(field => {
-    convertIdsToMongooseIdsOrNull.call(this, field);
-  });
-}
-
-function convertIdsToMongooseIdsOrNull(field) {
-  if (this[field]?.length) {
-    this[field] =
-      this[field].map(itemId => mongoose.Types.ObjectId(itemId));
-  } else {
-    this[field] = null;
-  }
-}
 
 module.exports = mongoose.model('Item', schema);

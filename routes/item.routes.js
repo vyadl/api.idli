@@ -12,9 +12,8 @@ module.exports = function(app) {
   });
 
   app.get(
-    '/api/item/:listid/:id',
+    '/api/item/:id',
     [
-      param('listid').exists().isString(),
       param('id').exists().isString(),
       validation.verifyBasicValidation,
     ],

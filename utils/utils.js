@@ -28,7 +28,7 @@ const listToClientPopulated = function(isDeletedInclude = false) {
 
   ['items', 'referringItems'].forEach(field => {
     if (obj[field]?.length) {
-      obj[field] = this[field].map(item => item.toClient());
+      obj[field] = this[field].map(item => toClient.call(item));
     }
   });
 
@@ -44,7 +44,7 @@ const itemToClientPopulated = function() {
 
   ['relatedItems', 'relatedLists', 'referringItems'].forEach(field => {
     if (obj[field]?.length) {
-      obj[field] = this[field].map(item => item.toClient());
+      obj[field] = this[field].map(item => toClient.call(item));
     }
   })
 
@@ -91,6 +91,7 @@ const getDifferenceForChangedArray = (arrayBefore, arrayAfter) => {
     all: new Set([...deletedItems, ...newItems]),
   }
 }
+
 
 module.exports = {
   checkIsSomethingDeletedByIds,
