@@ -269,22 +269,19 @@ exports.getDeletedLists = async (req, res) => {
   }
 };
 
-exports.hardDeleteList = (req, res) => {
-  List.findById(req.params.listid)
-    .exec(async (err, list) => {
-      resolve500Error(err, res);
+exports.hardDeleteList = async (req, res) => {
+  try {
+    const list = await List.findById(req.params.listid);
 
-      await deleteRelatedAndReferringRecordsForBatchItemsDeleting(list.items.map(id => String(id)));
-      await deleteReferringItemsInDeletingList(list._id);
+    await deleteRelatedAndReferringRecordsForBatchItemsDeleting(list.items.map(id => String(id)));
+    await deleteReferringItemsInDeletingList(list._id);
+    await Item.deleteMany({ _id: { $in: toObjectId(list.items) }});
+    await list.remove();
 
-      Item.deleteMany({ _id: { $in: toObjectId(list.items) }}, (err, result) => {
-        list.remove(err => {
-          resolve500Error(err, res);
-
-          res.status(200).send({ message: 'The list is successfully deleted' });
-        })
-      });
-    });
+    return res.status(200).send({ message: 'The list is successfully deleted' });
+  } catch (err) {
+    resolve500Error(err, res);
+  }
 };
 
 exports.hardDeleteAllLists = async (req, res) => {
@@ -305,7 +302,7 @@ exports.hardDeleteAllLists = async (req, res) => {
       deletedAt: { $ne: null },
     });
 
-    res.status(200).send({ message: 'All lists are permanently deleted' })
+    return res.status(200).send({ message: 'All lists are permanently deleted' })
   } catch(err) {
     resolve500Error(err, res);
   }
