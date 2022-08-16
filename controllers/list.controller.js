@@ -2,7 +2,7 @@ const db = require('../models');
 const User = db.user;
 const List = require('../models/list.model');
 const Item = require('../models/item.model');
-const { resolve500Error, handleUser } = require('./../middlewares/validation');
+const { resolve500Error, handleUserValidation } = require('./../middlewares/validation');
 const {
   removeDeletedTagsAndCategoriesFromItems,
   getFieldsWithIds,

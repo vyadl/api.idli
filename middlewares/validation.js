@@ -21,7 +21,7 @@ exports.resolve500Error = (err, res) => {
   }
 };
 
-exports.handleUser = (user, res) => {
+exports.handleUserValidation = (user, res) => {
   if (!user) {
     return res.status(410).send({ message: 'User was not found' });
   }

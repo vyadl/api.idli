@@ -2,7 +2,7 @@ const db = require('../models');
 const User = db.user;
 const List = require('./../models/list.model');
 const Item = require('./../models/item.model');
-const { resolve500Error } = require('./../middlewares/validation');
+const { resolve500Error, handleUserValidation } = require('./../middlewares/validation');
 const {
   deleteRelatedAndReferringRecordsForItem,
   deleteRelatedAndReferringRecordsForBatchItemsDeleting,
@@ -36,16 +36,10 @@ exports.getItem = async (req, res) => {
 
     const user = await User.findById(list.userId);
 
-    if (!user) {
-      return res.status(410).send({ message: 'User was not found' });
-    }
+    handleUserValidation(user);
 
     if (list.isPrivate && String(list.userId) !== String(user._id)) {
       return res.status(410).send({ message: 'The list this item belongs to is private' });
-    }
-
-    if (user.deletedAt) {
-      return res.status(410).send({ message: 'User with this item was deleted' });
     }
 
     const populatedItem = await itemRequest.populate([{
@@ -96,28 +90,23 @@ exports.addItem = async (req, res) => {
   });
 
   try {
-    List.findById(listId).exec((err, list) => {
-      list.items.push(item);
-      list.itemsUpdatedAt = now;
+    const list = await List.findById(listId);
 
-      item.save((err, item) => {
-        resolve500Error(err, res);
+    list.items.push(item);
+    list.itemsUpdatedAt = now;
 
-        list.save(async (err) => {
-          resolve500Error(err, res);
+    await item.save();
+    await list.save();
 
-          if (relatedItems || relatedLists) {
-            await handleChangingRelatedRecords({
-              itemId: item._id,
-              relatedItems,
-              relatedLists,
-            });
-          }
-
-          res.status(200).send(item.toClient());
-        });
+    if (relatedItems || relatedLists) {
+      await handleChangingRelatedRecords({
+        itemId: item._id,
+        relatedItems,
+        relatedLists,
       });
-    });
+    }
+
+    return res.status(200).send(item.toClient());
   } catch(err) {
     resolve500Error(err, res);
   }
@@ -227,7 +216,7 @@ exports.updateItem = async (req, res) => {
 
     await list.save();
 
-    res.status(200).send(updatedItem.toClient());
+    return res.status(200).send(updatedItem.toClient());
   } catch(err) {
     resolve500Error(err, res);
   }
@@ -258,74 +247,70 @@ exports.softDeleteItem = async (req, res) => {
   }
 };
 
-exports.restoreItem = (req, res) => {
-  List.findById(req.params.listid)
-    .exec((err, list) => {
-      Item.findById(req.params.id)
-        .exec((err, item) => {
-          resolve500Error(err, res);
+exports.restoreItem = async (req, res) => {
+  try {
+    const list = await List.findById(req.params.listid);
+    const item = await Item.findById(req.params.id);
 
-          item.deletedAt = null;
+    item.deletedAt = null;
 
-          item.save(err => {
-            resolve500Error(err, res);
+    await item.save();
 
-            res.status(200).send({
-              message: 'The item is successfully restored',
-              isListDeleted: !!list.deletedAt,
-              listTitle: list.deletedAt ? list.title : null,
-            });
-          })
-        });
-  });
+    return res.status(200).send({
+      message: 'The item is successfully restored',
+      isListDeleted: !!list.deletedAt,
+      listTitle: list.deletedAt ? list.title : null,
+    });
+  } catch (err) {
+    resolve500Error(err, res);
+  }
 };
 
-exports.getDeletedItems = (req, res) => {
-  List.find({ userId: req.userId })
-    .populate({
-      path: 'items',
-      model: Item,
-      select: '-__v',
-    })
-    .exec((err, lists) => {
-      resolve500Error(err, res);
+exports.getDeletedItems = async (req, res) => {
+  try {
+    const lists = await List.find({ userId: req.userId })
+      .populate({
+        path: 'items',
+        model: Item,
+        select: '-__v',
+      });
 
-      const listsFormattedForClient = lists
-        .map(list => list.listToClientPopulated(true));
-      const allUserItems = listsFormattedForClient.reduce((result, list) => {
-          return [...result, ...list.items]
-        }, []);
-      const deletedItems = allUserItems.filter(item => item.deletedAt);
+    const listsFormattedForClient = lists
+      .map(list => list.listToClientPopulated(true));
+    const allUserItems = listsFormattedForClient.reduce((result, list) => {
+        return [...result, ...list.items]
+      }, []);
+    const deletedItems = allUserItems.filter(item => item.deletedAt);
 
-      res.status(200).send(deletedItems);
-    }
-  );
+    return res.status(200).send(deletedItems);
+  } catch (err) {
+    resolve500Error(err, res);
+  }
 };
 
 exports.hardDeleteItem = async (req, res) => {
-  const itemId = req.params.id;
+  try {
+    const itemId = req.params.id;
 
-  const item = await Item.findById(itemId);
+    const item = await Item.findById(itemId);
 
-  if (!item) {
-    return res.status(400).send({ message: 'The item doesn\'t exist' });
-  }
+    if (!item) {
+      return res.status(400).send({ message: 'The item doesn\'t exist' });
+    }
 
-  await deleteRelatedAndReferringRecordsForItem(itemId);
+    await deleteRelatedAndReferringRecordsForItem(itemId);
+    await item.remove();
+    
+    const list = await List.findById(req.params.listid);
 
-  item.remove(async err => {
+    list.items = list.items.filter(id => String(id) !== req.params.id);
+
+    await list.save();
+
+    return res.status(200).send({ message: 'The item is successfully deleted' });
+  } catch (err) {
     resolve500Error(err, res);
-
-    List.findById(req.params.listid).exec((err, list) => {
-      list.items = list.items.filter(id => String(id) !== req.params.id);
-
-      list.save(err => {
-        resolve500Error(err, res);
-
-        res.status(200).send({ message: 'The item is successfully deleted' });
-      });
-    });
-  });
+  }
 };
 
 exports.hardDeleteAllItems = async (req, res) => {
@@ -348,13 +333,11 @@ exports.hardDeleteAllItems = async (req, res) => {
     }, {}));
 
     await Promise.all(itemsByLists.map(async ([listId, items]) => {
-      await List.findById(listId).exec(async (err, list) => {
-        list.items = list.items.filter(id => !items.includes(String(id)));
+      const list = await List.findById(listId);
+
+      list.items = list.items.filter(id => !items.includes(String(id)));
   
-        await list.save((err) => {
-          resolve500Error(err, res);
-        });
-      });
+      await list.save();
     }));
 
     await Item.deleteMany({
@@ -362,7 +345,7 @@ exports.hardDeleteAllItems = async (req, res) => {
       deletedAt: { $ne: null },
     });
 
-    res.status(200).send({ message: 'All items are permanently deleted' });
+    return res.status(200).send({ message: 'All items are permanently deleted' });
   } catch(err) {
     resolve500Error(err, res);
   }
@@ -390,7 +373,7 @@ exports.restoreAllItems = async (req, res) => {
     });
     const listsTitlesArray = deletedListsWithRestoredItems.map(list => list.title);
 
-    res.status(200).send({
+    return res.status(200).send({
       listsTitlesArray,
       message: 'All items are successfully restored',
     })
