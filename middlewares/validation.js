@@ -20,3 +20,13 @@ exports.resolve500Error = (err, res) => {
     return res.status(500).send({ message: String(err) });
   }
 };
+
+exports.handleUser = (user, res) => {
+  if (!user) {
+    return res.status(410).send({ message: 'User was not found' });
+  }
+
+  if (user.deletedAt) {
+    return res.status(410).send({ message: 'User was deleted' });
+  }
+}

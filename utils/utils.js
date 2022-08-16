@@ -23,6 +23,10 @@ const toClient = function() {
   return obj;
 };
 
+const getListsToClient = (lists) => {
+  return lists.map(list => list.toClient());
+}
+
 const listToClientPopulated = function(isDeletedInclude = false) {
   const obj = toClient.call(this);
 
@@ -96,6 +100,7 @@ const getDifferenceForChangedArray = (arrayBefore, arrayAfter) => {
 module.exports = {
   checkIsSomethingDeletedByIds,
   toClient,
+  getListsToClient,
   listToClientPopulated,
   itemToClientPopulated,
   getFormattedDate,

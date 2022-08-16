@@ -2,7 +2,7 @@ const db = require('../models');
 const User = db.user;
 const List = require('../models/list.model');
 const Item = require('../models/item.model');
-const { resolve500Error } = require('./../middlewares/validation');
+const { resolve500Error, handleUser } = require('./../middlewares/validation');
 const {
   removeDeletedTagsAndCategoriesFromItems,
   getFieldsWithIds,
@@ -12,7 +12,7 @@ const {
   deleteReferringItemsforBatchListDeleting,
   deleteReferringItemsInDeletingList,
 } = require('./actions/relatedRecords.actions');
-const { getFormattedDate } = require('./../utils/utils');
+const { getFormattedDate, getListsToClient } = require('./../utils/utils');
 const { toObjectId } = require('./../utils/databaseUtils');
 
 exports.setItemsOrder = async (req, res) => {
@@ -50,71 +50,64 @@ exports.setItemsOrder = async (req, res) => {
   }
 };
 
-exports.getListsForCurrentUser = (req, res) => {
-  List.find({
-    userId: req.userId,
-    deletedAt: null,
-  }).exec((err, lists) => {
+exports.getListsForCurrentUser = async (req, res) => {
+  try {
+    const lists = await List.find({
+      userId: req.userId,
+      deletedAt: null,
+    });
+
+    return res.status(200).send(getListsToClient(lists));
+  } catch (err) {
     resolve500Error(err, res);
-
-    const finalLists = lists.map(list => list.toClient());
-
-    res.status(200).send(finalLists);
-  });
+  }
 }
 
-exports.getPublicListsByUserId = (req, res) => {
-  User.findById(req.params.userid, (err, user) => {
-    if (!user) {
-      return res.status(410).send({ message: 'User was not found' });
-    }
+exports.getPublicListsByUserId = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userid);
+    
+    handleUserValidation(user, res);
 
-    if (user.deletedAt) {
-      return res.status(410).send({ message: 'User was deleted' });
-    }
-
-    List.find({
+    const lists = List.find({
       userId: req.params.userid,
       isPrivate: false,
       deletedAt: null,
-    }, (err, lists) => {
-      resolve500Error(err, res);
-
-      const finalLists = lists.map(list => list.toClient());
-
-      res.status(200).send(finalLists);
     });
-  });
+
+    return res.status(200).send(getListsToClient(lists));
+  } catch (err) {
+    resolve500Error(err, res);
+  }
 };
 
 exports.getList = async (req, res) => {
-  const list = await List.findById(req.params.id);
+  try {
+    const list = await List.findById(req.params.id).populate([{
+      path: 'items',
+      model: Item,
+    },
+    {
+      path: 'referringItems',
+      model: Item,
+    }]);
 
-  List.findById(req.params.id).populate([{
-    path: 'items',
-    model: Item,
-  },
-  {
-    path: 'referringItems',
-    model: Item,
-  }])
-    .exec(async (err, list) => {
-      resolve500Error(err, res);
+    if (!list) {
+      return res.status(404).send({ message: 'List doesn\'t exist' });
+    }
 
-      if (!list) {
-        return res.status(404).send({ message: 'List doesn\'t exist' });
-      }
+    if (list.deletedAt) {
+      return res.status(410).send({ message: 'The list is deleted' });
+    }
 
-      if (list.deletedAt) {
-        return res.status(410).send({ message: 'The list is deleted' });
-      }
+    if (list.isPrivate && (!req.userId || req.userId !== list.userId)) {
+      return res.status(400).send({ message: 'List is private' });
+    }
 
-      if (list.isPrivate && (!req.userId || req.userId !== list.userId)) {
-        return res.status(400).send({ message: 'List is private' });
-      }
-
-      res.status(200).send(list.listToClientPopulated());
-  });
+    res.status(200).send(list.listToClientPopulated());
+  } catch (err) {
+    resolve500Error(err, res);
+  }
 }
 
 exports.addList = async (req, res) => {
@@ -197,10 +190,6 @@ exports.updateList = async (req, res) => {
     if (list.deletedAt) {
       return res.status(410).send({ message: 'The list is deleted' });
     }
-
-    if (list.deletedAt) {
-      return res.status(410).send({ message: 'The list is deleted' });
-    }
   
     const oldList = JSON.parse(JSON.stringify(list));
     const fieldsWithIds = getFieldsWithIds(req.body);
@@ -237,7 +226,7 @@ exports.softDeleteList = async (req, res) => {
 
     await list.save();
     
-    res.status(200).send({ message: 'The list is successfully deleted' });
+    return res.status(200).send({ message: 'The list is successfully deleted' });
   } catch(err) {
     resolve500Error(err, res);
   }
@@ -261,24 +250,23 @@ exports.restoreList = async (req, res) => {
 
     await listForRestore.save();
 
-    res.status(200).send({ message: 'The list is successfully restored' });
+    return res.status(200).send({ message: 'The list is successfully restored' });
   } catch(err) {
     resolve500Error(err, res);
   }
 };
 
-exports.getDeletedLists = (req, res) => {
-  List.find({
-    userId: req.userId,
-    deletedAt: { $ne: null },
-  })
-    .exec((err, lists) => {
-      resolve500Error(err, res);
-
-      const finalLists = lists.map(list => list.toClient());
-
-      res.status(200).send(finalLists);
+exports.getDeletedLists = async (req, res) => {
+  try {
+    const lists = await List.find({
+      userId: req.userId,
+      deletedAt: { $ne: null },
     });
+
+    return res.status(200).send(getListsToClient(lists));
+  } catch (err) {
+    resolve500Error(err, res);
+  }
 };
 
 exports.hardDeleteList = (req, res) => {
