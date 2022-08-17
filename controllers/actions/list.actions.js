@@ -1,4 +1,3 @@
-const List = require('../../models/list.model');
 const Item = require('../../models/item.model');
 const { resolve500Error } = require('../../middlewares/validation');
 const { checkIsSomethingDeletedByIds } = require('../../utils/utils');
@@ -14,7 +13,7 @@ exports.removeDeletedTagsAndCategoriesFromItems = ({ req, res, list }) => {
 
   if (isAnyTagDeleted || isAnyCategoryDeleted) {
     return Item.find({ listId: list._id }, (err, items) => {
-      resolve500Error(err, req, res);
+      resolve500Error(err, res);
 
       const tagIds = tags ? tags.map(tag => tag.id) : [];
       const categoryIds = categories ? categories.map(category => category.id) : [];

@@ -7,7 +7,7 @@ const checkDuplicationUsernameOrEmail = (req, res, next) => {
   User.findOne({
     username: req.body.username,
   }).exec((err, user) => {
-    resolve500Error(err, req, res);
+    resolve500Error(err, res);
 
     if (user) {
       return res.status(400).send({ message: 'Failed! Username is already in use/' })
@@ -16,7 +16,7 @@ const checkDuplicationUsernameOrEmail = (req, res, next) => {
     User.findOne({
       email: req.body.email,
     }).exec((err, email) => {
-      resolve500Error(err, req, res);
+      resolve500Error(err, res);
 
       if (email) {
         return res.status(400).send({ message: 'Failed! Email is already in use/' })

@@ -12,9 +12,8 @@ module.exports = function(app) {
   });
 
   app.get(
-    '/api/item/:listid/:id',
+    '/api/item/:id',
     [
-      param('listid').exists().isString(),
       param('id').exists().isString(),
       validation.verifyBasicValidation,
     ],
@@ -60,7 +59,9 @@ module.exports = function(app) {
         body('details').exists(),
         body('category').exists(),
         body('tags').exists(),
-      ], 'At least one field to change is required (title, details, category, tags)'),
+        body('relatedItems').exists(),
+        body('relatedLists').exists(),
+      ], 'At least one field to change is required (title, details, category, tags, related items, related lists)'),
       validation.verifyBasicValidation,
       verifyList.isListBelongToUser,
       verifyList.isListExist,

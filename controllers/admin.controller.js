@@ -12,7 +12,7 @@ exports.hardDeleteUser = (req, res) => {
   User.deleteOne(
     { _id: id },
     (err, { deletedCount }) => {
-      resolve500Error(err, req, res);
+      resolve500Error(err, res);
 
       if (!deletedCount) {
         return res.status(400).send({ message: `User with id ${id} does not exist` });
@@ -31,7 +31,7 @@ exports.softDeleteUser = (req, res) => {
   }
 
   User.findById(id).exec((err, user) => {
-    resolve500Error(err, req, res);
+    resolve500Error(err, res);
 
     if (!user) {
       return res.status(400).send({ message: `User with id ${id} does not exist` });
@@ -40,7 +40,7 @@ exports.softDeleteUser = (req, res) => {
     user.deletedAt = new Date();
 
     user.save(err => {
-      resolve500Error(err, req, res);
+      resolve500Error(err, res);
 
       res.send({ message: 'User successfully soft deleted' });
     })
