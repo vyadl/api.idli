@@ -1,8 +1,6 @@
 const { logger } = require('./logger');
 const { validationResult } = require('express-validator');
 
-console.log(logger);
-
 exports.verifyBasicValidation = (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     const firstError = validationResult(req).errors[0];
