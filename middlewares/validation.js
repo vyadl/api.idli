@@ -1,4 +1,7 @@
+const { logger } = require('./logger');
 const { validationResult } = require('express-validator');
+
+console.log(logger);
 
 exports.verifyBasicValidation = (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
@@ -16,7 +19,11 @@ exports.verifyBasicValidation = (req, res, next) => {
 
 exports.resolve500Error = (err, res) => {
   if (err) {
-    console.log(err);
+    logger.log({
+      level: 'error',
+      message: err.stack,
+    });
+
     return res.status(500).send({ message: String(err) });
   }
 };
