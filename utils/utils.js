@@ -28,11 +28,11 @@ const toClient = function() {
 
   delete obj._id;
   delete obj.__v;
-  
+
   return obj;
 };
 
-const getArrayToClient = (array) => {
+const getArrayToClient = array => {
   return array.map(item => toClient.call(item));
 }
 
@@ -49,7 +49,7 @@ const listToClientPopulated = function(isDeletedInclude = false) {
     obj.items = obj.items.filter(item => !item.deletedAt);
   }
 
-  return obj; 
+  return obj;
 };
 
 const itemToClientPopulated = function() {
