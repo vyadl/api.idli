@@ -12,7 +12,7 @@ const {
   deleteReferringItemsforBatchListDeleting,
   deleteReferringItemsInDeletingList,
 } = require('./actions/relatedRecords.actions');
-const { getFormattedDate, getListsToClient } = require('./../utils/utils');
+const { getFormattedDate, getArrayToClient } = require('./../utils/utils');
 const { toObjectId } = require('./../utils/databaseUtils');
 
 exports.setItemsOrder = async (req, res) => {
@@ -35,14 +35,14 @@ exports.setItemsOrder = async (req, res) => {
 
     await list.save();
 
-    const populatedList = await List.findById(listId).populate({
+    const populatedList = await List.findById(listId).populate([{
       path: 'items',
       model: Item,
     },
     {
       path: 'referringItems',
       model: Item,
-    });
+    }]);
 
     res.status(200).send(populatedList.listToClientPopulated());
   } catch(err) {
@@ -57,7 +57,7 @@ exports.getListsForCurrentUser = async (req, res) => {
       deletedAt: null,
     });
 
-    return res.status(200).send(getListsToClient(lists));
+    return res.status(200).send(getArrayToClient(lists));
   } catch (err) {
     resolve500Error(err, res);
   }
@@ -75,7 +75,7 @@ exports.getPublicListsByUserId = async (req, res) => {
       deletedAt: null,
     });
 
-    return res.status(200).send(getListsToClient(lists));
+    return res.status(200).send(getArrayToClient(lists));
   } catch (err) {
     resolve500Error(err, res);
   }
@@ -203,14 +203,14 @@ exports.updateList = async (req, res) => {
 
     await removeDeletedTagsAndCategoriesFromItems({ list: oldList, req, res });
 
-    const populatedList = await List.findById(updatedList._id).populate({
+    const populatedList = await List.findById(updatedList._id).populate([{
       path: 'items',
-      populate: 'items',
+      model: Item,
     },
     {
       path: 'referringItems',
-      populate: 'items',
-    });
+      model: Item,
+    }]);
 
     return res.status(200).send(populatedList.listToClientPopulated());
   } catch(err) {
@@ -263,7 +263,7 @@ exports.getDeletedLists = async (req, res) => {
       deletedAt: { $ne: null },
     });
 
-    return res.status(200).send(getListsToClient(lists));
+    return res.status(200).send(getArrayToClient(lists));
   } catch (err) {
     resolve500Error(err, res);
   }
