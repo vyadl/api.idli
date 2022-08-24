@@ -6,7 +6,14 @@ const checkIsSomethingDeletedByIds = (oldObj, newObj) => {
 }
 
 const toClient = function() {
-  const obj = this.toObject();
+  let obj = {}
+
+  if ('toObject' in this) {
+    obj =  this.toObject();
+  } else {
+    obj = JSON.parse(JSON.stringify(this));
+  }
+  
   const isList = typeof obj.itemsUpdatedAt !== 'undefined';
 
   if (isList) {
@@ -15,7 +22,9 @@ const toClient = function() {
     delete obj.itemsUpdatedAt;
   }
 
-  obj.id = obj._id;
+  if (!obj.id) {
+    obj.id = String(obj._id);
+  }
 
   delete obj._id;
   delete obj.__v;
@@ -23,8 +32,8 @@ const toClient = function() {
   return obj;
 };
 
-const getListsToClient = (lists) => {
-  return lists.map(list => list.toClient());
+const getArrayToClient = array => {
+  return array.map(item => toClient.call(item));
 }
 
 const listToClientPopulated = function(isDeletedInclude = false) {
@@ -100,7 +109,7 @@ const getDifferenceForChangedArray = (arrayBefore, arrayAfter) => {
 module.exports = {
   checkIsSomethingDeletedByIds,
   toClient,
-  getListsToClient,
+  getArrayToClient,
   listToClientPopulated,
   itemToClientPopulated,
   getFormattedDate,

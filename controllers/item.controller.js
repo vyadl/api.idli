@@ -9,6 +9,7 @@ const {
   handleChangingRelatedRecords,
 } = require('./actions/relatedRecords.actions');
 const { toObjectId } = require('./../utils/databaseUtils');
+const { getArrayToClient } = require('./../utils/utils');
 
 const VALID_KEYS_FOR_UPDATE = [
   'title',
@@ -92,7 +93,7 @@ exports.addItem = async (req, res) => {
   try {
     const list = await List.findById(listId);
 
-    list.items.push(item);
+    list.items.push(item._id);
     list.itemsUpdatedAt = now;
 
     await item.save();
@@ -269,11 +270,11 @@ exports.restoreItem = async (req, res) => {
 exports.getDeletedItems = async (req, res) => {
   try {
     const lists = await List.find({ userId: req.userId })
-      .populate({
+      .populate([{
         path: 'items',
         model: Item,
         select: '-__v',
-      });
+      }]);
 
     const listsFormattedForClient = lists
       .map(list => list.listToClientPopulated(true));
@@ -282,7 +283,7 @@ exports.getDeletedItems = async (req, res) => {
       }, []);
     const deletedItems = allUserItems.filter(item => item.deletedAt);
 
-    return res.status(200).send(deletedItems);
+    return res.status(200).send(getArrayToClient(deletedItems));
   } catch (err) {
     resolve500Error(err, res);
   }
