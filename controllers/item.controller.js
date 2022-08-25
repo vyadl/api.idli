@@ -63,7 +63,7 @@ exports.getItem = async (req, res) => {
 };
 
 exports.addItem = async (req, res) => {
-  const { title, details, tags, category, relatedItems, relatedLists } = req.body;
+  const { title, details, tags, category, relatedItems, relatedLists, temporaryId } = req.body;
   const { listid: listId } = req.params;
 
   if (!title) {
@@ -107,7 +107,10 @@ exports.addItem = async (req, res) => {
       });
     }
 
-    return res.status(200).send(item.toClient());
+    return res.status(200).send({
+      ...item.toClient(),
+      temporaryId,
+    });
   } catch(err) {
     resolve500Error(err, res);
   }
