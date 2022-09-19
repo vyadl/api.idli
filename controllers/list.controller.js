@@ -92,13 +92,6 @@ exports.getList = async (req, res) => {
       model: Item,
     }]);
 
-    if (!list) {
-      return res.status(404).send({ message: 'List doesn\'t exist' });
-    }
-
-    if (list.deletedAt) {
-      return res.status(410).send({ message: 'The list is deleted' });
-    }
 
     if (list.isPrivate && (!req.userId || req.userId !== list.userId)) {
       return res.status(400).send({ message: 'List is private' });
