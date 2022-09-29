@@ -21,6 +21,12 @@ module.exports = function(app) {
     controller.getList,
   );
 
+  app.get('/api/list/public/:id', [
+    verifyList.isListExist,
+  ],
+  controller.getList,
+);
+
   app.get('/api/user/lists/:userid', [
       param('userid').isString().notEmpty(),
       validation.verifyBasicValidation,

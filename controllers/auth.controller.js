@@ -17,7 +17,7 @@ exports.signup = (req, res) => {
   });
 
   user.save((err, user) => {
-    resolve500Error(err, req, res);
+    resolve500Error(err, res);
     
     if (req.body.roles) {
       const parsedRoles = JSON.parse(req.body.roles);
@@ -25,11 +25,11 @@ exports.signup = (req, res) => {
       Role.find(
         { name: { $in: parsedRoles } },
         (err, roles) => {
-          resolve500Error(err, req, res);
+          resolve500Error(err, res);
 
           user.roles = roles.map(role => role._id);
           user.save(err => {
-            resolve500Error(err, req, res);
+            resolve500Error(err, res);
 
             res.send({ message: 'User successfully created' });
           })
@@ -39,7 +39,7 @@ exports.signup = (req, res) => {
       Role.findOne(
         { name: 'user' },
         (err, role) => {
-        resolve500Error(err, req, res);
+        resolve500Error(err, res);
 
         user.roles = [role._id];
         user.save(err => {
@@ -56,7 +56,11 @@ exports.signup = (req, res) => {
 
 exports.signin = (req, res) => {
   User.findOne({ username: req.body.username })
-    .populate('roles', '-__v')
+    .populate({
+      path: 'roles',
+      model: Role,
+      select: '-__v',
+    })
     .exec((err, user) => {
       if (err) {
         return res.status(500).send({ message: err });
@@ -75,14 +79,14 @@ exports.signin = (req, res) => {
         return res.status(410).send({
           accessToken: null,
           message: 'User was deleted',
-        })
+        });
       }
 
       if (!isPasswordValid) {
         return res.status(404).send({
           accessToken: null,
-          message: 'Invalid password',
-        })
+          message: 'Invalid credentials',
+        });
       }
 
       const token = jwt.sign(

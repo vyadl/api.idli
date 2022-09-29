@@ -1,0 +1,30 @@
+name: Deploy dev
+
+on:
+  push:
+    branches: [ dev ]
+  
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: executing remote ssh commands
+      uses: appleboy/ssh-action@master
+      env:
+       NICKNAME: ${{ secrets.NICKNAME_GITHUB }}
+       TOKEN: ${{ secrets.TOKEN_GITHUB }}
+      with:
+        host: ${{ secrets.HOST_SERVER }}
+        username: ${{ secrets.NICKNAME_SERVER }}
+        password: ${{ secrets.PASSWORD_SERVER }}
+        port: ${{ secrets.PORT_SERVER }}
+        envs: NICKNAME,TOKEN
+        script_stop: true
+        script: |
+          source /home/vyadl/nodevenv/api.dev.idli.space/14/bin/activate && cd /home/vyadl/api.dev.idli.space
+          git checkout dev
+          git pull "https://$NICKNAME:$TOKEN@github.com/vyadl/api.idli.git" dev
+          npm install
+          touch tmp/restart.txt

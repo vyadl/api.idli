@@ -4,7 +4,7 @@ const { resolve500Error } = require('./validation');
 
 exports.isListBelongToUser = (req, res, next) => {
   List.findById(req.params.listid).exec((err, list) => {
-    resolve500Error(err, req, res);
+    resolve500Error(err, res);
 
     if (!list) {
       return res.status(410).send({ message: 'This list doesn\'t exist' });
@@ -20,7 +20,7 @@ exports.isListExist = (req, res, next) => {
   const listId = req.params.listid || req.params.id;
 
   List.findById(listId).exec((err, list) => {
-    resolve500Error(err, req, res);
+    resolve500Error(err, res);
 
     if (!list) {
       return res.status(410).send({ message: 'This list doesn\'t exist' });

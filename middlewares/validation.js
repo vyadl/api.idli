@@ -1,3 +1,4 @@
+const { logger } = require('./logger');
 const { validationResult } = require('express-validator');
 
 exports.verifyBasicValidation = (req, res, next) => {
@@ -14,8 +15,23 @@ exports.verifyBasicValidation = (req, res, next) => {
   next();
 };
 
-exports.resolve500Error = (err, req, res) => {
+exports.resolve500Error = (err, res) => {
   if (err) {
-    return res.status(500).send({ message: err });
+    logger.log({
+      level: 'error',
+      message: err.stack,
+    });
+
+    return res.status(500).send({ message: String(err) });
   }
 };
+
+exports.handleUserValidation = (user, res) => {
+  if (!user) {
+    return res.status(410).send({ message: 'User was not found' });
+  }
+
+  if (user.deletedAt) {
+    return res.status(410).send({ message: 'User was deleted' });
+  }
+}

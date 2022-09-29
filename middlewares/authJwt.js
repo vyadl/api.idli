@@ -2,7 +2,6 @@ const jwt = require('jsonwebtoken');
 const db = require('../models');
 const User = db.user;
 const Role = db.role;
-const { resolve500Error } = require('./../middlewares/validation');
 const SECRET_AUTH_KEY = process.env.SECRET_AUTH_KEY;
 
 const verifyToken = (req, res, next) => {
