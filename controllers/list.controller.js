@@ -103,6 +103,28 @@ exports.getList = async (req, res) => {
   }
 }
 
+exports.getPublicTitles = async (req, res) => {
+  const { ids } = req.body;
+
+  const lists = await List.find({
+    _id: { $in: toObjectId(ids) },
+    deletedAt: null,
+    isPrivate: false,
+  });
+
+  if (!lists.length) {
+    return res.status(400).send({ message: 'There is no public lists with these ids' });
+  }
+
+  const titles = lists.reduce((result, list) => {
+    result[list._id] = list.title;
+
+    return result;
+  }, {});
+
+  return res.status(200).send({ titles });
+}
+
 exports.addList = async (req, res) => {
   const {
     tags: reqTags,

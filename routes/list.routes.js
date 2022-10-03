@@ -13,6 +13,12 @@ module.exports = function(app) {
 
   app.get('/api/lists', [authJwt.verifyToken], controller.getListsForCurrentUser);
 
+  app.post('/api/list/public-titles', [
+      body('ids').exists().isArray()
+    ],
+    controller.getPublicTitles,
+  );
+
   app.get('/api/list/:id', [
       authJwt.verifyToken,
       authJwt.getUserId,
@@ -22,10 +28,10 @@ module.exports = function(app) {
   );
 
   app.get('/api/list/public/:id', [
-    verifyList.isListExist,
-  ],
-  controller.getList,
-);
+      verifyList.isListExist,
+    ],
+    controller.getList,
+  );
 
   app.get('/api/user/lists/:userid', [
       param('userid').isString().notEmpty(),
