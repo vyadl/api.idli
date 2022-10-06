@@ -7,6 +7,7 @@ const {
   deleteRelatedAndReferringRecordsForItem,
   deleteRelatedAndReferringRecordsForBatchItemsDeleting,
   handleChangingRelatedRecords,
+  getPopulatedItemWithRelated,
 } = require('./actions/relatedRecords.actions');
 const { toObjectId } = require('./../utils/databaseUtils');
 const { getArrayToClient } = require('./../utils/utils');
@@ -22,8 +23,8 @@ const VALID_KEYS_FOR_UPDATE = [
 
 exports.getItem = async (req, res) => {
   try {
-    const itemRequest = Item.findById(req.params.id);
-    const item = await itemRequest;
+    const itemDbRequest = Item.findById(req.params.id);
+    const item = await itemDbRequest;
 
     if (!item) {
       return res.status(410).send({ message: 'The item doesn\'t exist' });
@@ -32,29 +33,23 @@ exports.getItem = async (req, res) => {
     const list = await List.findById(item.listId);
 
     if (!list) {
-      return res.status(410).send({ message: 'This list doen\'t exist' });
+      return res.status(410).send({ message: 'This list doesn\'t exist' });
     }
 
     const user = await User.findById(list.userId);
+    const isItemBelongsToRequester = String(list.userId) === String(user._id);
 
-    handleUserValidation(user);
-
-    if (list.isPrivate && String(list.userId) !== String(user._id)) {
+    if (list.isPrivate && !isItemBelongsToRequester) {
       return res.status(410).send({ message: 'The list this item belongs to is private' });
     }
 
-    const populatedItem = await itemRequest.populate([{
-      path: 'relatedItems',
-      model: Item,
-    },
-    {
-      path: 'relatedLists',
-      model: List,
-    },
-    {
-      path: 'referringItems',
-      model: Item,
-    }]);
+    handleUserValidation(user, res);
+
+    const populatedItem = await getPopulatedItemWithRelated({
+      itemDbRequest,
+      item,
+      isItemBelongsToRequester,
+    });
 
     return res.status(200).send(populatedItem.itemToClientPopulated());
   } catch (err) {
@@ -96,7 +91,9 @@ exports.addItem = async (req, res) => {
     list.items.push(item._id);
     list.itemsUpdatedAt = now;
 
-    await item.save();
+    const savedItem = await item.save();
+    const itemDbRequest = Item.findById(savedItem._id);
+
     await list.save();
 
     if (relatedItems || relatedLists) {
@@ -107,10 +104,16 @@ exports.addItem = async (req, res) => {
       });
     }
 
-    return res.status(200).send({
-      ...item.toClient(),
+    const resultItem = {
+      ...(await getPopulatedItemWithRelated({
+        itemDbRequest,
+        item: savedItem,
+        isItemBelongsToRequester: true,
+      })).toClient(),
       temporaryId,
-    });
+    }
+
+    return res.status(200).send(resultItem);
   } catch(err) {
     resolve500Error(err, res);
   }
@@ -213,6 +216,7 @@ exports.updateItem = async (req, res) => {
     item.updatedAt = now;
 
     const updatedItem = await item.save();
+    const itemDbRequest = Item.findById(updatedItem._id);
 
     await handleChangingRelatedRecords(optionsForRelated);
 
@@ -220,7 +224,13 @@ exports.updateItem = async (req, res) => {
 
     await list.save();
 
-    return res.status(200).send(updatedItem.toClient());
+    const resultItem = (await getPopulatedItemWithRelated({
+      itemDbRequest,
+      item: updatedItem,
+      isItemBelongsToRequester: true,
+    })).toClient();
+
+    return res.status(200).send(resultItem);
   } catch(err) {
     resolve500Error(err, res);
   }

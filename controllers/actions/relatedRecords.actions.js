@@ -173,10 +173,90 @@ const deleteReferringItems = async ({
   }
 }
 
+const getFilteredPopulatedItemForPublic = async populatedItem => {
+  const listsIds = new Set();
+  const itemEntityFields = ['relatedItems', 'referringItems'];
+
+  itemEntityFields.forEach(entityName => {
+    if (populatedItem[entityName]?.length) {
+      populatedItem[entityName].forEach(item => {
+        listsIds.add(item.listId);
+      });
+    }
+  });
+
+  const usingLists = await List.find({ _id: { $in: toObjectId([...listsIds]) } });
+
+  const privateListsIds = usingLists.reduce((result, list) => {
+    if (list.isPrivate) {
+      result.add(String(list._id));
+    }
+
+    return result;
+  }, new Set());
+
+  const filteredPopulatedItems = itemEntityFields.reduce((result, entityName) => {
+    let resultEntityField = [];
+
+    resultEntityField = populatedItem[entityName]
+      ?.filter(item => !privateListsIds.has(String(item.listId)));
+
+    result[entityName] = resultEntityField;
+
+    return result;
+  }, {});
+
+  const filteredPopulatedLists = populatedItem.relatedLists?.filter(list => !list.isPrivate);
+  const resultItem = {
+    ...populatedItem,
+    ...filteredPopulatedItems,
+    relatedLists: filteredPopulatedLists,
+  };
+
+  Object.setPrototypeOf(resultItem, populatedItem);
+
+  return resultItem;
+}
+
+const getPopulatedItemWithRelated = async ({ itemDbRequest, item, isItemBelongsToRequester }) => {
+  const entitiesForPopulating = new Set(
+    ['relatedItems', 'relatedLists', 'referringItems']
+      .filter(entityName => item[entityName]?.length)
+  );
+
+
+  if (!entitiesForPopulating.size) {
+    return item;
+  }
+
+  const populateOptions = [{
+      path: 'relatedItems',
+      model: Item,
+    },
+    {
+      path: 'relatedLists',
+      model: List,
+    },
+    {
+      path: 'referringItems',
+      model: Item,
+    }
+  ].filter(populateOption => entitiesForPopulating.has(populateOption.path))
+  let populatedItem = await itemDbRequest.populate(populateOptions);
+
+  if (isItemBelongsToRequester) {
+    populatedItem = await getFilteredPopulatedItemForPublic(populatedItem);
+  }
+
+  return populatedItem;
+}
+
 module.exports = {
   deleteRelatedAndReferringRecordsForItem,
   handleChangingRelatedRecords,
   deleteReferringItemsInDeletingList,
   deleteRelatedAndReferringRecordsForBatchItemsDeleting,
   deleteReferringItemsforBatchListDeleting,
+  getFilteredPopulatedItemForPublic,
+  getPopulatedItemWithRelated,
 }
