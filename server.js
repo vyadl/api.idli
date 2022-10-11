@@ -24,6 +24,11 @@ const createApp = async () => {
     limit: '50mb',
     extended: true,
   }));
+  app.set('etag', false);
+  app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store')
+    next();
+  })
 
   app.get('/', (req, res) => {
     res.json({ message: 'Welcome to idli application' })
