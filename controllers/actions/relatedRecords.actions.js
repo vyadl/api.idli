@@ -224,7 +224,6 @@ const getPopulatedItemWithRelated = async ({ itemDbRequest, item, isItemBelongsT
       .filter(entityName => item[entityName]?.length)
   );
 
-
   if (!entitiesForPopulating.size) {
     return item;
   }
@@ -241,7 +240,8 @@ const getPopulatedItemWithRelated = async ({ itemDbRequest, item, isItemBelongsT
       path: 'referringItems',
       model: Item,
     }
-  ].filter(populateOption => entitiesForPopulating.has(populateOption.path))
+  ].filter(populateOption => entitiesForPopulating.has(populateOption.path));
+
   let populatedItem = await itemDbRequest.populate(populateOptions);
 
   if (isItemBelongsToRequester) {

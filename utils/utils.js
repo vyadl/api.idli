@@ -13,7 +13,7 @@ const toClient = function() {
   } else {
     obj = JSON.parse(JSON.stringify(this));
   }
-  
+
   const isList = typeof obj.itemsUpdatedAt !== 'undefined';
 
   if (isList) {
@@ -57,7 +57,7 @@ const itemToClientPopulated = function() {
 
   ['relatedItems', 'relatedLists', 'referringItems'].forEach(field => {
     if (obj[field]?.length) {
-      obj[field] = this[field].map(item => toClient.call(item));
+      obj[field] = obj[field].map(item => toClient.call(item));
     }
   })
 
