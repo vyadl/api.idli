@@ -101,9 +101,9 @@ const handleChangingRelatedRecords = async ({
       let isChanged = false;
 
       if (entity.differenceObj.deleted.has(String(record._id))) {
-        finalReferringItems = record.referringItems.filter(id => String(id) !== String(itemId));
+        finalReferringItems = record.referringItems?.filter(id => String(id) !== String(itemId));
 
-        if (!finalReferringItems.length) {
+        if (!finalReferringItems?.length) {
           finalReferringItems = null;
         }
 
@@ -152,14 +152,14 @@ const deleteReferringItems = async ({
 
   referringItems.forEach(item => {
     const filteredRelatedIds
-      = item[relatedEntityName].filter(id => String(id) !== String(recordId));
+      = item[relatedEntityName]?.filter(id => String(id) !== String(recordId));
 
     bulkOptions.push({
       updateOne: {
         filter: { _id: item._id },
         update: {
           $set: {
-            [relatedEntityName]: filteredRelatedIds.length ? filteredRelatedIds : null,
+            [relatedEntityName]: filteredRelatedIds?.length ? filteredRelatedIds : null,
           },
         },
       },
