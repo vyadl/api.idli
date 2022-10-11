@@ -22,6 +22,7 @@ const VALID_KEYS_FOR_UPDATE = [
 ];
 
 exports.getItem = async (req, res) => {
+  console.log(req.params.id);
   try {
     const itemDbRequest = Item.findById(req.params.id);
     const item = await itemDbRequest;
