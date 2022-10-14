@@ -62,8 +62,6 @@ exports.getItem = async (req, res) => {
         });
     }
 
-    handleUserValidation(user, res);
-
     const populatedItem = await getPopulatedItemWithRelated({
       itemDbRequest,
       item,
