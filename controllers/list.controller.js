@@ -3,6 +3,7 @@ const User = db.user;
 const List = require('../models/list.model');
 const Item = require('../models/item.model');
 const { resolve500Error, handleUserValidation } = require('./../middlewares/validation');
+const { getUserId } = require('./../middlewares/authJwt');
 const {
   removeDeletedTagsAndCategoriesFromItems,
   getFieldsWithIds,
@@ -92,8 +93,11 @@ exports.getList = async (req, res) => {
       model: Item,
     }]);
 
+    const userId = await getUserId(req, res);
+    const isListBelongToUser = String(list.userId) === userId;
 
-    if (list.isPrivate && (!req.userId || req.userId !== list.userId)) {
+
+    if (list.isPrivate && !isListBelongToUser) {
       return res.status(400).send({ message: 'List is private' });
     }
 

@@ -3,6 +3,7 @@ const User = db.user;
 const List = require('./../models/list.model');
 const Item = require('./../models/item.model');
 const { resolve500Error, handleUserValidation } = require('./../middlewares/validation');
+const { getUserId } = require('./../middlewares/authJwt');
 const {
   deleteRelatedAndReferringRecordsForItem,
   deleteRelatedAndReferringRecordsForBatchItemsDeleting,
@@ -37,8 +38,9 @@ exports.getItem = async (req, res) => {
       return res.status(410).send({ message: 'This list doesn\'t exist' });
     }
 
-    const user = await User.findById(list.userId);
-    const isItemBelongsToRequester = String(list.userId) === String(user._id);
+    const userId = await getUserId(req, res);
+
+    const isItemBelongsToRequester = String(list.userId) === userId;
 
     if (list.isPrivate && !isItemBelongsToRequester) {
       return res.status(410).send({ message: 'The list this item belongs to is private' });
@@ -55,7 +57,7 @@ exports.getItem = async (req, res) => {
     if (list.deletedAt) {
       return res.status(410).send({
         message: isItemBelongsToRequester
-          ? 'The list which item belongs is in bin'
+          ? 'The list this item belongs to is in bin'
           : GENERAL_ANSWER_OF_ABSENCE
         });
     }
