@@ -54,6 +54,18 @@ module.exports = function(app) {
       body('title').if(body('title').exists()).isString().notEmpty(),
       body('details').if(body('details').exists()).isString(),
       body('tags').if(body('tags').exists()).isArray(),
+      body('relatedItems')
+        .if(
+            body('relatedItems').exists({checkFalsy: true})
+          )
+        .isArray()
+        .custom((value) => value.every(item => typeof item === 'string')),
+      body('relatedLists')
+        .if(
+            body('relatedLists').exists({checkFalsy: true})
+          )
+        .isArray()
+        .custom((value) => value.every(item => typeof item === 'string')),
       oneOf([
         body('title').exists(),
         body('details').exists(),

@@ -76,6 +76,12 @@ const handleChangingRelatedRecords = async ({
 }) => {
   const relatedItemsDifference = getDifferenceForChangedArray(oldRelatedItems || [], relatedItems || []);
   const relatedListsDifference = getDifferenceForChangedArray(oldRelatedLists || [], relatedLists || []);
+  const areAnyChanges = relatedItemsDifference.all.size || relatedListsDifference.all.size;
+
+  if (!areAnyChanges) {
+    return false;
+  }
+
   const itemsForChange = relatedItemsDifference.all.size
     ? await Item.find({ _id: { $in: toObjectId(Array.from(relatedItemsDifference.all)) } })
     : [];
