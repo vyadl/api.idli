@@ -22,18 +22,16 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-const getUserId = (req, res, next) => {
+const getUserId = async (req) => {
   const token = req.headers['x-access-token'];
+  
+  if (token) {
+    const decoded = await jwt.verify(token, SECRET_AUTH_KEY);
 
-  jwt.verify(token, SECRET_AUTH_KEY, (err, decoded) => {
-    if (decoded) {
-      req.userId = decoded.id;
-    } else {
-      req.userId = null;
-    }
-
-    next();
-  });
+    return decoded?.id;
+  } else {
+    return null;
+  }
 };
 
 const isAdmin = (req, res, next) => {

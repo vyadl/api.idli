@@ -20,14 +20,6 @@ module.exports = function(app) {
   );
 
   app.get('/api/list/:id', [
-      authJwt.verifyToken,
-      authJwt.getUserId,
-      verifyList.isListExist,
-    ],
-    controller.getList,
-  );
-
-  app.get('/api/list/public/:id', [
       verifyList.isListExist,
     ],
     controller.getList,
