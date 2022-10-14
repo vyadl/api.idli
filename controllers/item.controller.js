@@ -25,9 +25,10 @@ exports.getItem = async (req, res) => {
   try {
     const itemDbRequest = Item.findById(req.params.id);
     const item = await itemDbRequest;
+    const GENERAL_ANSWER_OF_ABSENCE = 'The item doesn\'t exist';
 
     if (!item) {
-      return res.status(410).send({ message: 'The item doesn\'t exist' });
+      return res.status(410).send({ message: GENERAL_ANSWER_OF_ABSENCE });
     }
 
     const list = await List.findById(item.listId);
@@ -41,6 +42,22 @@ exports.getItem = async (req, res) => {
 
     if (list.isPrivate && !isItemBelongsToRequester) {
       return res.status(410).send({ message: 'The list this item belongs to is private' });
+    }
+
+    if (item.deletedAt) {
+      return res.status(410).send({
+        message: isItemBelongsToRequester
+          ? 'The item is in bin'
+          : GENERAL_ANSWER_OF_ABSENCE
+        });
+    }
+
+    if (list.deletedAt) {
+      return res.status(410).send({
+        message: isItemBelongsToRequester
+          ? 'The list which item belongs is in bin'
+          : GENERAL_ANSWER_OF_ABSENCE
+        });
     }
 
     handleUserValidation(user, res);
