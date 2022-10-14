@@ -38,7 +38,7 @@ exports.getItem = async (req, res) => {
       return res.status(410).send({ message: 'This list doesn\'t exist' });
     }
 
-    const userId = await getUserId(req, res);
+    const userId = await getUserId(req);
 
     const isItemBelongsToRequester = String(list.userId) === userId;
 

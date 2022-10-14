@@ -93,7 +93,7 @@ exports.getList = async (req, res) => {
       model: Item,
     }]);
 
-    const userId = await getUserId(req, res);
+    const userId = await getUserId(req);
     const isListBelongToUser = String(list.userId) === userId;
 
 
