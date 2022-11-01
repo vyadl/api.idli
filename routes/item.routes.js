@@ -51,7 +51,6 @@ module.exports = function(app) {
     [
       authJwt.verifyToken,
       param('listid').isString(),
-      body('title').if(body('title').exists()).isString().notEmpty(),
       body('details').if(body('details').exists()).isString(),
       body('tags').if(body('tags').exists()).isArray(),
       body('relatedItems')
