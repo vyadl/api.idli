@@ -24,7 +24,7 @@ module.exports = function(app) {
     '/api/item/add/:listid',
     [
       authJwt.verifyToken,
-      body('title').exists().isString().notEmpty(),
+      body('title').exists().isString(),
       body('details').if(body('details').exists()).isString(),
       validation.verifyBasicValidation,
       verifyList.isListBelongToUser,
@@ -35,10 +35,10 @@ module.exports = function(app) {
 
   app.post(
     '/api/items/add-many/:listid',
+    // here "-many" was added for easier recognizing and preventing confusing
     [
       authJwt.verifyToken,
       body('items').exists().isArray({ min: 1 }),
-      // here "-many" was added for easier recognizing and preventing confusing
       validation.verifyBasicValidation,
       verifyList.isListBelongToUser,
       verifyList.isListExist,
