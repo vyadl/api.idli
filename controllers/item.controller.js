@@ -78,10 +78,6 @@ exports.addItem = async (req, res) => {
   const { title, details, tags, category, relatedItems, relatedLists, temporaryId } = req.body;
   const { listid: listId } = req.params;
 
-  if (!title) {
-    res.status(400).send({ message: 'Title is required' });
-  }
-
   if (!listId) {
     res.status(400).send({ message: 'List ID is required' });
   }
