@@ -2,6 +2,7 @@ const db = require('../models');
 const ROLES = db.ROLES;
 const User = db.user;
 const { resolve500Error } = require('./../middlewares/validation');
+const { signUpValidationStorage } = require('./../storage/auth/signUpValidation.storage');
 
 const checkDuplicationUsernameOrEmail = (req, res, next) => {
   User.findOne({
@@ -43,9 +44,21 @@ const checkIsEveryRoleExisted = (req, res, next) => {
   next();
 };
 
+const checkValidationCode = (req, res, next) => {
+  const { email, validationCode } = req.body;
+  const isValid = signUpValidationStorage.isValid(email, validationCode);
+
+  if (!isValid) {
+    return res.status(400).send('Validation code is not correct.');
+  }
+
+  next();
+}
+
 const verifySignUp = {
   checkDuplicationUsernameOrEmail,
   checkIsEveryRoleExisted,
+  checkValidationCode,
 }
 
 module.exports = verifySignUp;
