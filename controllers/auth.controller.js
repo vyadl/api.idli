@@ -54,7 +54,7 @@ exports.signup = (req, res) => {
           user.save(err => {
             resolve500Error(err, res);
 
-            res.send({ message: 'User successfully created' });
+            res.status(200).send({ message: 'User successfully created' });
           })
         },
       )
@@ -70,7 +70,7 @@ exports.signup = (req, res) => {
             res.status(500).send({ message: err });
           }
 
-          res.send({ message: 'User successfully created' });
+          res.status(200).send({ message: 'User successfully created' });
         })
       });
     }
@@ -213,7 +213,9 @@ exports.requestResetPassword = async (req, res) => {
       sendEmail({
         to: req.body.email,
         subject: 'Reset password',
-        body: code,
+        body: `Your validation code is <big>${code}</big>
+It will be valid for ${timeInMinutes} minutes`,
+        isHtml: true,
       })
 
       return res.status(200).send(`The request is approved. Check your email for a link.
