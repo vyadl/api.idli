@@ -102,6 +102,7 @@ module.exports = function(app) {
       body('accessToken').exists().isString().notEmpty(),
       body('refreshToken').exists().isString().notEmpty(),
       body('fingerprint').exists().isString().notEmpty(),
+      body('mode').exists().isString().notEmpty(),
       validation.verifyBasicValidation,
     ],
     controller.logout,
