@@ -33,10 +33,6 @@ exports.resetPasswordStorage = {
     return false;
   },
   delete(email) {
-    console.log('in delete');
-    console.log(this.list);
-    console.log(email);
-
     if (this.list[email]) {
       delete this.list[email];
     } else {

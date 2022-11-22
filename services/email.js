@@ -16,8 +16,6 @@ exports.sendEmail = ({
   body,
   isHtml = false,
 }) => {
-  //console.log(transporter);
-
   transporter.sendMail({
     from: 'system@idli.space',
     to,
