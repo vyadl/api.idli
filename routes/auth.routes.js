@@ -64,7 +64,7 @@ module.exports = function(app) {
     [
       authJwt.verifyToken,
       body('email').exists().isString().notEmpty(),
-      body('oldPassword').exists().isString().notEmpty(),
+      body('currentPassword').exists().isString().notEmpty(),
       body('newPassword').exists().isString().notEmpty(),
       body('accessToken').exists().isString().notEmpty(),
       body('refreshToken').exists().isString().notEmpty(),
