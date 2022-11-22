@@ -1,5 +1,6 @@
 const { customAlphabet } = require('nanoid');
-const TEN_MINUTES_IN_MS = 1000 * 60 * 10
+const TIME_IN_MINUTES = 10;
+const TEN_MINUTES_IN_MS = 1000 * 60 * TIME_IN_MINUTES
 const TIME_FOR_EXPIRING = TEN_MINUTES_IN_MS;
 
 exports.signUpValidationStorage = {
@@ -19,7 +20,7 @@ exports.signUpValidationStorage = {
 
     return {
       code,
-      timeInMinutes: TIME_FOR_EXPIRING,
+      timeInMinutes: TIME_IN_MINUTES,
     };
   },
   isValid(email, code) {

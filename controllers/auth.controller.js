@@ -2,14 +2,11 @@ const db = require('../models');
 const User = db.user;
 const Role = db.role;
 const Session = db.session;
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { nanoid } = require('nanoid');
 const { resolve500Error } = require('./../middlewares/validation');
 const { createPasswordHash, createNewSession, logout } = require('./actions/auth.actions');
 const { resetPasswordStorage } = require('./../storage/auth/resetPassword.storage');
 const { signUpValidationStorage } = require('./../storage/auth/signUpValidation.storage');
-const { accessTokenBlackListStorage } = require('./../storage/auth/accessTokenBlackList.storage');
 const { sendEmail } = require('./../services/email');
 
 exports.validateEmailForSignUp = (req, res) => {
@@ -25,7 +22,10 @@ It will be valid for ${timeInMinutes} minutes.`,
     isHtml: true,
   });
 
-  return res.status(200).send('The email is send. Check you mailbox.');
+  return res.status(200).send({
+    message: 'The email is send. Check you mailbox.',
+    codeLifetimeInMinutes: timeInMinutes,
+  });
 }
 
 exports.signup = (req, res) => {
@@ -113,7 +113,7 @@ exports.signin = async (req, res) => {
       accessToken,
       refreshToken,
       authorities,
-    } = createNewSession(user, req.body.fingerprint);
+    } = await createNewSession(user, req.body.fingerprint);
 
     return res.status(200).send({
       id: user._id,
@@ -218,8 +218,11 @@ It will be valid for ${timeInMinutes} minutes`,
         isHtml: true,
       })
 
-      return res.status(200).send(`The request is approved. Check your email for a link.
-The validation code will be valid for ${timeInMinutes} minutes`);
+      return res.status(200).send({
+        message: `The request is approved. Check your email for a link.
+The validation code will be valid for ${timeInMinutes} minutes`,
+        codeLifetimeInMinutes: timeInMinutes,
+      });
     } else {
       return res.status(400);
     }

@@ -1,5 +1,6 @@
 const { customAlphabet } = require('nanoid');
-const FIVE_MINUTES_IN_MS = 1000 * 60 * 5;
+const TIME_IN_MINUTES = 5;
+const FIVE_MINUTES_IN_MS = 1000 * 60 * TIME_IN_MINUTES;
 const TIME_FOR_EXPIRING = FIVE_MINUTES_IN_MS;
 
 exports.resetPasswordStorage = {
@@ -19,7 +20,7 @@ exports.resetPasswordStorage = {
 
     return {
       code,
-      timeInMinutes: TIME_FOR_EXPIRING,
+      timeInMinutes: TIME_IN_MINUTES,
     };
   },
   isValid(email, code) {
