@@ -3,11 +3,12 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { nanoid } = require('nanoid');
 const { resolve500Error } = require('./../../middlewares/validation');
-
+const TEN_MINUTES_IN_MS = 1000 * 60 * 10;
+const MINUTE_IN_MS = 1000 * 60;
 const MONTH_IN_MS = 1000 * 60 * 60 * 24 * 30;
 const HALF_AN_HOUR_IN_SEC = 60 * 30;
-const REFRESH_TOKEN_LIFETIME = MONTH_IN_MS;
-const ACCESS_TOKEN_LIFETIME = HALF_AN_HOUR_IN_SEC;
+const REFRESH_TOKEN_LIFETIME = TEN_MINUTES_IN_MS;
+const ACCESS_TOKEN_LIFETIME = MINUTE_IN_MS;
 
 exports.ACCESS_TOKEN_LIFETIME = ACCESS_TOKEN_LIFETIME * 1000;
 

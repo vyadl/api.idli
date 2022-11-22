@@ -1,5 +1,5 @@
 const { customAlphabet } = require('nanoid');
-const TIME_IN_MINUTES = 5;
+const TIME_IN_MINUTES = 1;
 const FIVE_MINUTES_IN_MS = 1000 * 60 * TIME_IN_MINUTES;
 const TIME_FOR_EXPIRING = FIVE_MINUTES_IN_MS;
 
