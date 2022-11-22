@@ -169,7 +169,7 @@ exports.changePassword = async (req, res) => {
     const user = await User.findOne({ email });
 
     const isPasswordValid = bcrypt.compareSync(
-      req.body.oldPassword,
+      req.body.currentPassword,
       user.password,
     );
 
