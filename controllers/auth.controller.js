@@ -190,6 +190,7 @@ exports.changePassword = async (req, res) => {
         fingerprint,
         userId: String(user._id),
         mode: 'allExceptCurrent',
+        res,
       }).then(({ message }) => {
         return res.status(200).send(message);
       }).catch(({ message }) => {
@@ -247,6 +248,7 @@ exports.resetPassword = async (req, res) => {
           userId: String(user._id),
           isNoTokensMode: true,
           mode: 'all',
+          res,
         }).then(({ message }) => {
           return res.status(200).send(message);
         }).catch(() => {

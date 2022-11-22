@@ -12,11 +12,11 @@ const ACCESS_TOKEN_LIFETIME = MINUTE_IN_MS;
 
 exports.ACCESS_TOKEN_LIFETIME = ACCESS_TOKEN_LIFETIME;
 
-exports.createPasswordHash = (password) => {
+const createPasswordHash = (password) => {
   return bcrypt.hashSync(password, 8);
 }
 
-exports.createNewSession = async (user, fingerprint) => {
+const createNewSession = async (user, fingerprint) => {
   const accessToken = jwt.sign(
     { id: user.id },
     process.env.SECRET_AUTH_KEY,
@@ -44,11 +44,11 @@ exports.createNewSession = async (user, fingerprint) => {
   return { accessToken, refreshToken, authorities };
 }
 
-exports.checkIsSessionValid = async ({ userId, accessToken, refreshToken, fingerprint }) => {
+const checkIsSessionValid = async ({ userId, accessToken, refreshToken, fingerprint }) => {
   const session = await Session.findOne({ accessToken });
 
   const isValid = session.userId === userId
-    && session.accessToken === accessToken
+    && session.refreshToken === refreshToken
     && session.fingerprint === fingerprint;
 
   return {
@@ -57,13 +57,14 @@ exports.checkIsSessionValid = async ({ userId, accessToken, refreshToken, finger
   };
 }
 
-exports.logout = async ({
+const logout = async ({
   userId,
   accessToken,
   refreshToken,
   fingerprint,
   mode,
   isNoTokensMode = false,
+  res,
 }) => {
   const modeMessages = {
     'all': 'You are succesully logged out from all devices',
@@ -88,7 +89,7 @@ exports.logout = async ({
       return Promise.resolve({ message: modeMessages.all });
     } else {
       const { isValid, currentSession }
-        = checkIsSessionValid({ userId, accessToken, refreshToken, fingerprint });
+        = await checkIsSessionValid({ userId, accessToken, refreshToken, fingerprint });
 
       if (isValid) {
         if (mode === 'allExceptCurrent') {
@@ -117,4 +118,11 @@ exports.logout = async ({
   } catch (err) {
     resolve500Error(err, res);
   }
+}
+
+module.exports = {
+  createPasswordHash,
+  createNewSession,
+  checkIsSessionValid,
+  logout,
 }
