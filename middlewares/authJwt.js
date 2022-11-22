@@ -31,9 +31,15 @@ const getUserId = async (req) => {
   const token = req.headers['x-access-token'];
   
   if (token) {
+    try {
     const decoded = await jwt.verify(token, SECRET_AUTH_KEY);
 
+    console.log(decoded);
+
     return decoded?.id;
+    } catch (err) {
+      return null;
+    }
   } else {
     return null;
   }

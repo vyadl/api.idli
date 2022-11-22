@@ -35,10 +35,10 @@ module.exports = function(app) {
   app.post(
     '/api/list/add',
     [
+      authJwt.verifyToken,
       body('title').exists().isString().notEmpty(),
       body('isPrivate').if(body('isPrivate').exists()).isBoolean(),
       validation.verifyBasicValidation,
-      authJwt.verifyToken,
     ],
     controller.addList,
   );
@@ -46,6 +46,7 @@ module.exports = function(app) {
   app.patch(
     '/api/list/update/:listid',
     [
+      authJwt.verifyToken,
       param('listid').isString(),
       body('isPrivate').if(body('isPrivate').exists()).isBoolean(),
       body('categories').if(body('categories').exists()).isArray(),
@@ -58,7 +59,6 @@ module.exports = function(app) {
         body('title').exists(),
       ], 'At least one field to change is required (title, isPrivate, tags, categories)'),
       validation.verifyBasicValidation,
-      authJwt.verifyToken,
       verifyList.isListBelongToUser,
       verifyList.isListExist,
     ],
