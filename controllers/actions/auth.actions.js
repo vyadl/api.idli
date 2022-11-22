@@ -10,7 +10,7 @@ const HALF_AN_HOUR_IN_SEC = 60 * 30;
 const REFRESH_TOKEN_LIFETIME = TEN_MINUTES_IN_MS;
 const ACCESS_TOKEN_LIFETIME = MINUTE_IN_MS;
 
-exports.ACCESS_TOKEN_LIFETIME = ACCESS_TOKEN_LIFETIME * 1000;
+exports.ACCESS_TOKEN_LIFETIME = ACCESS_TOKEN_LIFETIME;
 
 exports.createPasswordHash = (password) => {
   return bcrypt.hashSync(password, 8);
@@ -20,7 +20,7 @@ exports.createNewSession = async (user, fingerprint) => {
   const accessToken = jwt.sign(
     { id: user.id },
     process.env.SECRET_AUTH_KEY,
-    { expiresIn: ACCESS_TOKEN_LIFETIME },
+    { expiresIn: Math.round(ACCESS_TOKEN_LIFETIME / 1000) },
   );
   const refreshToken = nanoid();
   const authorities = [];
