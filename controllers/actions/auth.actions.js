@@ -3,20 +3,20 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { nanoid } = require('nanoid');
 const { resolve500Error } = require('./../../middlewares/validation');
+const { accessTokenBlackListStorage } = require('./../../storage/auth/accessTokenBlackList.storage');
 const TEN_MINUTES_IN_MS = 1000 * 60 * 10;
 const MINUTE_IN_MS = 1000 * 60;
 const MONTH_IN_MS = 1000 * 60 * 60 * 24 * 30;
 const HALF_AN_HOUR_IN_SEC = 60 * 30;
 const REFRESH_TOKEN_LIFETIME = TEN_MINUTES_IN_MS;
 const ACCESS_TOKEN_LIFETIME = MINUTE_IN_MS;
-
 exports.ACCESS_TOKEN_LIFETIME = ACCESS_TOKEN_LIFETIME;
 
-exports.createPasswordHash = (password) => {
+const createPasswordHash = (password) => {
   return bcrypt.hashSync(password, 8);
 }
 
-exports.createNewSession = async (user, fingerprint) => {
+const createNewSession = async (user, fingerprint) => {
   const accessToken = jwt.sign(
     { id: user.id },
     process.env.SECRET_AUTH_KEY,
@@ -44,11 +44,11 @@ exports.createNewSession = async (user, fingerprint) => {
   return { accessToken, refreshToken, authorities };
 }
 
-exports.checkIsSessionValid = async ({ userId, accessToken, refreshToken, fingerprint }) => {
+const checkIsSessionValid = async ({ userId, accessToken, refreshToken, fingerprint }) => {
   const session = await Session.findOne({ accessToken });
 
   const isValid = session.userId === userId
-    && session.accessToken === accessToken
+    && session.refreshToken === refreshToken
     && session.fingerprint === fingerprint;
 
   return {
@@ -57,13 +57,14 @@ exports.checkIsSessionValid = async ({ userId, accessToken, refreshToken, finger
   };
 }
 
-exports.logout = async ({
+const logout = async ({
   userId,
   accessToken,
   refreshToken,
   fingerprint,
   mode,
   isNoTokensMode = false,
+  res,
 }) => {
   const modeMessages = {
     'all': 'You are succesully logged out from all devices',
@@ -80,7 +81,7 @@ exports.logout = async ({
       const sessions = await Session.find({ userId });
 
       sessions.forEach(session => {
-        accessTokenBlackListStorage.add(session.accessToken);
+        accessTokenBlackListStorage.add(session.accessToken, ACCESS_TOKEN_LIFETIME);
       });
 
       await sessions.remove();
@@ -88,7 +89,7 @@ exports.logout = async ({
       return Promise.resolve({ message: modeMessages.all });
     } else {
       const { isValid, currentSession }
-        = checkIsSessionValid({ userId, accessToken, refreshToken, fingerprint });
+        = await checkIsSessionValid({ userId, accessToken, refreshToken, fingerprint });
 
       if (isValid) {
         if (mode === 'allExceptCurrent') {
@@ -97,14 +98,16 @@ exports.logout = async ({
           });
 
           sessions.forEach(session => {
-            accessTokenBlackListStorage.add(session.accessToken);
+            accessTokenBlackListStorage.add(session.accessToken, ACCESS_TOKEN_LIFETIME);
           });
 
-          await sessions.remove();
+          await Session.deleteMany({
+            _id: { $in: sessions.map(session => session._id) }
+          });
         }
         
         if (['all', 'current'].includes(mode)) {
-          accessTokenBlackListStorage.add(currentSession.accessToken);
+          accessTokenBlackListStorage.add(currentSession.accessToken, ACCESS_TOKEN_LIFETIME);
 
           await currentSession.remove();
         }
@@ -117,4 +120,11 @@ exports.logout = async ({
   } catch (err) {
     resolve500Error(err, res);
   }
+}
+
+module.exports = {
+  createPasswordHash,
+  createNewSession,
+  checkIsSessionValid,
+  logout,
 }
