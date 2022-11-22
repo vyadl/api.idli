@@ -1,13 +1,10 @@
-const { ACCESS_TOKEN_LIFETIME } = require('./../../controllers/actions/auth.actions');
-const TIME_FOR_EXPIRING = ACCESS_TOKEN_LIFETIME;
-
-exports.accessTokenBlackList = {
+exports.accessTokenBlackListStorage = {
   list: {},
   isInList(accessToken) {
     return !!this.list[accessToken];
   },
-  add(accessToken) {
-    this.list[accessToken] = +new Date() + TIME_FOR_EXPIRING;
+  add(accessToken, timeForExpiring) {
+    this.list[accessToken] = +new Date() + timeForExpiring;
 
     setTimeout(() => {
       this.deleteAllExpired();

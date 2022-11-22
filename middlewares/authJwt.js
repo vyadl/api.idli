@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { accessTokenBlackList } = require('./../storage/auth/accessTokenBlackList.storage');
+const { accessTokenBlackListStorage } = require('./../storage/auth/accessTokenBlackList.storage');
 const db = require('../models');
 const User = db.user;
 const Role = db.role;
@@ -12,7 +12,7 @@ const verifyToken = (req, res, next) => {
     return res.status(403).send({ message: 'No token provided.' });
   }
 
-  if (accessTokenBlackList.isInList(token)) {
+  if (accessTokenBlackListStorage.isInList(token)) {
     return res.status(400).send({ message: 'Token is not valid anymore.' });
   }
 
