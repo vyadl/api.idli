@@ -143,7 +143,7 @@ exports.refresh = async (req, res) => {
       const {
         accessToken,
         refreshToken,
-      } = createNewSession(user, req.body.fingerprint);
+      } = await createNewSession(user, req.body.fingerprint);
 
       return res.status(200).send({
         accessToken,

@@ -5,6 +5,32 @@ const User = db.user;
 const Role = db.role;
 const SECRET_AUTH_KEY = process.env.SECRET_AUTH_KEY;
 
+const checkTokenWhenExist = async ({ req, res, next }) => {
+  if (accessTokenBlackListStorage.isInList(token)) {
+    return res.status(400).send({ message: 'Token is not valid anymore.' });
+  }
+
+  const result = await jwt.verify(token, SECRET_AUTH_KEY);
+
+  if (result.id) {
+    req.userId = decoded.id;
+
+    next();
+  } else {
+    return res.status(401).send({ message: 'Invalid JWT Token' });
+  }
+}
+
+const verifyTokenIfNotPublic = (req, res, next) => {
+  const isPublic = !req.isPrivateRequest;
+
+  if (isPublic) {
+    return next();
+  }
+
+  checkTokenWhenExist({ req, res, next });
+};
+
 const verifyToken = (req, res, next) => {
   const token = req.headers['x-access-token'];
 
@@ -12,37 +38,7 @@ const verifyToken = (req, res, next) => {
     return res.status(403).send({ message: 'No token provided.' });
   }
 
-  if (accessTokenBlackListStorage.isInList(token)) {
-    return res.status(400).send({ message: 'Token is not valid anymore.' });
-  }
-
-  jwt.verify(token, SECRET_AUTH_KEY, (err, decoded) => {
-    if (err) {
-      return res.status(401).send({ message: 'Invalid JWT Token' });
-    }
-
-    req.userId = decoded.id;
-
-    next();
-  });
-};
-
-const getUserId = async (req) => {
-  const token = req.headers['x-access-token'];
-  
-  if (token) {
-    try {
-    const decoded = await jwt.verify(token, SECRET_AUTH_KEY);
-
-    console.log(decoded);
-
-    return decoded?.id;
-    } catch (err) {
-      return null;
-    }
-  } else {
-    return null;
-  }
+  checkTokenWhenExist({ req, res, next });
 };
 
 const isAdmin = (req, res, next) => {
@@ -76,8 +72,8 @@ const isAdmin = (req, res, next) => {
 
 const authJwt = {
   verifyToken,
+  verifyTokenIfNotPublic,
   isAdmin,
-  getUserId,
 };
 
 module.exports = authJwt;

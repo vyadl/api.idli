@@ -1,5 +1,5 @@
 const { body, param, oneOf } = require('express-validator');
-const { authJwt, verifyList, validation } = require('./../middlewares');
+const { authJwt, verifyList, validation, verifyPrivacy } = require('./../middlewares');
 const controller = require('./../controllers/list.controller');
 
 module.exports = function(app) {
@@ -11,7 +11,11 @@ module.exports = function(app) {
     next();
   });
 
-  app.get('/api/lists', [authJwt.verifyToken], controller.getListsForCurrentUser);
+  app.get('/api/lists', [
+      authJwt.verifyToken
+    ],
+    controller.getListsForCurrentUser,
+  );
 
   app.post('/api/list/public-titles', [
       body('ids').exists().isArray()
@@ -20,7 +24,10 @@ module.exports = function(app) {
   );
 
   app.get('/api/list/:id', [
+      verifyList.fetchAndSaveListInReq,
       verifyList.isListExist,
+      verifyPrivacy.saveIsListPrivateInReq,
+      authJwt.verifyTokenIfNotPublic,
     ],
     controller.getList,
   );
@@ -59,6 +66,7 @@ module.exports = function(app) {
         body('title').exists(),
       ], 'At least one field to change is required (title, isPrivate, tags, categories)'),
       validation.verifyBasicValidation,
+      verifyList.fetchAndSaveListInReq,
       verifyList.isListBelongToUser,
       verifyList.isListExist,
     ],
@@ -69,6 +77,7 @@ module.exports = function(app) {
     '/api/list/delete/:listid',
     [
       authJwt.verifyToken,
+      verifyList.fetchAndSaveListInReq,
       verifyList.isListBelongToUser,
       verifyList.isListExist,
     ],

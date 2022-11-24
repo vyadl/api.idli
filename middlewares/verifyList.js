@@ -2,9 +2,21 @@ const db = require('../models');
 const List = db.list;
 const { resolve500Error } = require('./validation');
 
-exports.isListBelongToUser = (req, res, next) => {
-  List.findById(req.params.listid).exec((err, list) => {
-    resolve500Error(err, res);
+exports.fetchAndSaveListInReq = async (req, res, next) => {
+  try {
+    const list = await List.findById(req.params.listid);
+
+    req.fetchedList = list || null;
+
+    next();
+  } catch (err) {
+    resolve500Error(err);
+  }
+};
+
+exports.isListBelongToUser = async (req, res, next) => {
+  try {
+    const list = req.fetchedList || await List.findById(req.params.listid);
 
     if (!list) {
       return res.status(410).send({ message: 'This list doesn\'t exist' });
@@ -13,14 +25,15 @@ exports.isListBelongToUser = (req, res, next) => {
     }
 
     next();
-  });
+  } catch (err) {
+    resolve500Error(err);
+  }
 };
 
-exports.isListExist = (req, res, next) => {
-  const listId = req.params.listid || req.params.id;
-
-  List.findById(listId).exec((err, list) => {
-    resolve500Error(err, res);
+exports.isListExist = async (req, res, next) => {
+  try {
+    const listId = req.params.listid || req.params.id;
+    const list = req.fetchedList || await List.findById(listId);
 
     if (!list) {
       return res.status(410).send({ message: 'This list doesn\'t exist' });
@@ -31,5 +44,7 @@ exports.isListExist = (req, res, next) => {
     }
 
     next();
-  });
+  } catch (err) {
+    resolve500Error(err);
+  }
 };

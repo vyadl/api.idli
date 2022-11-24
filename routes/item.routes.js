@@ -1,5 +1,5 @@
 const { body, param, oneOf } = require('express-validator');
-const { authJwt, verifyList, validation } = require('./../middlewares');
+const { authJwt, verifyList, validation, verifyPrivacy } = require('./../middlewares');
 const controller = require('./../controllers/item.controller');
 
 module.exports = function(app) {
@@ -16,6 +16,8 @@ module.exports = function(app) {
     [
       param('id').exists().isString(),
       validation.verifyBasicValidation,
+      verifyPrivacy.saveIsItemPrivateInReq,
+      authJwt.verifyTokenIfNotPublic,
     ],
     controller.getItem,
   );
@@ -74,6 +76,7 @@ module.exports = function(app) {
         body('relatedLists').exists(),
       ], 'At least one field to change is required (title, details, category, tags, related items, related lists)'),
       validation.verifyBasicValidation,
+      verifyList.fetchAndSaveListInReq,
       verifyList.isListBelongToUser,
       verifyList.isListExist,
     ],
@@ -84,6 +87,7 @@ module.exports = function(app) {
     '/api/item/delete/:listid/:id',
     [
       authJwt.verifyToken,
+      verifyList.fetchAndSaveListInReq,
       verifyList.isListBelongToUser,
       verifyList.isListExist,
     ],
