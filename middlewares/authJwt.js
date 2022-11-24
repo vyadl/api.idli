@@ -41,22 +41,6 @@ const verifyToken = (req, res, next) => {
   checkTokenWhenExist({ req, res, next });
 };
 
-const getUserId = async (req, res) => {
-  const token = req.headers['x-access-token'];
-  
-  if (token) {
-    try {
-      const decoded = await jwt.verify(token, SECRET_AUTH_KEY);
-
-    return decoded?.id;
-    } catch (err) {
-      return null;
-    }
-  } else {
-    return null;
-  }
-};
-
 const isAdmin = (req, res, next) => {
   User.findById(req.userId).exec((err, user) => {
     if (err) {
@@ -90,7 +74,6 @@ const authJwt = {
   verifyToken,
   verifyTokenIfNotPublic,
   isAdmin,
-  getUserId,
 };
 
 module.exports = authJwt;
