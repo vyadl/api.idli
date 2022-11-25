@@ -12,13 +12,13 @@ const checkTokenWhenExist = async ({ req, res, next }) => {
     return res.status(400).send({ message: 'Token is not valid anymore.' });
   }
 
-  const result = await jwt.verify(token, SECRET_AUTH_KEY);
+  try {
+    const result = await jwt.verify(token, SECRET_AUTH_KEY);
 
-  if (result.id) {
     req.userId = result.id;
 
     next();
-  } else {
+  } catch {
     return res.status(401).send({ message: 'Invalid JWT Token' });
   }
 }
