@@ -6,6 +6,8 @@ const Role = db.role;
 const SECRET_AUTH_KEY = process.env.SECRET_AUTH_KEY;
 
 const checkTokenWhenExist = async ({ req, res, next }) => {
+  const token = req.headers['x-access-token'];
+
   if (accessTokenBlackListStorage.isInList(token)) {
     return res.status(400).send({ message: 'Token is not valid anymore.' });
   }
@@ -13,7 +15,7 @@ const checkTokenWhenExist = async ({ req, res, next }) => {
   const result = await jwt.verify(token, SECRET_AUTH_KEY);
 
   if (result.id) {
-    req.userId = decoded.id;
+    req.userId = result.id;
 
     next();
   } else {
