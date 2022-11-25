@@ -8,7 +8,7 @@ exports.saveIsListPrivateInReq = async (req, res, next) => {
     const list = req.fetchedList || await List.findById(req.params.listid);
 
     if (list) {
-      req.isPrivateRequest = !list.isPrivate;
+      req.isPrivateRequest = list.isPrivate;
 
       next();
     } else {
