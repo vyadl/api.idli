@@ -4,7 +4,7 @@ const { resolve500Error } = require('./validation');
 
 exports.fetchAndSaveListInReq = async (req, res, next) => {
   try {
-    const list = await List.findById(req.params.listid);
+    const list = await List.findById(req.params.id);
 
     req.fetchedList = list || null;
 
