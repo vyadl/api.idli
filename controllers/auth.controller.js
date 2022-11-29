@@ -131,19 +131,25 @@ exports.signin = async (req, res) => {
 exports.refresh = async (req, res) => {
   try {
     const session = await Session.findOne({ accessToken: req.body.accessToken });
+
     const isValid = session.fingerprint === req.body.fingerprint
       && +session.refreshExpiredAt > +new Date()
       && session.refreshToken === req.body.refreshToken;
 
     if (isValid) {
-      const user = await User.findById(session.userId);
-
-      await session.remove();
+      const user = await User.findById(session.userId)
+        .populate({
+          path: 'roles',
+          model: Role,
+          select: '-__v',
+        });
 
       const {
         accessToken,
         refreshToken,
       } = await createNewSession(user, req.body.fingerprint);
+
+      await session.remove();
 
       return res.status(200).send({
         accessToken,
@@ -152,7 +158,7 @@ exports.refresh = async (req, res) => {
     } else {
       return res.status(400).send('The request is invalid');
     }
-  } catch {
+  } catch (err) {
     resolve500Error(err, res);
   }
 }
