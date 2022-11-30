@@ -9,7 +9,10 @@ const checkTokenWhenExist = async ({ req, res, next }) => {
   const token = req.headers['x-access-token'];
 
   if (accessTokenBlackListStorage.isInList(token)) {
-    return res.status(400).send({ message: 'Token is not valid anymore.' });
+    return res.status(400).send({
+      code: 'ACCESS_TOKEN_ERROR',
+      message: 'Invalid JWT Token'
+    });
   }
 
   try {
@@ -19,7 +22,10 @@ const checkTokenWhenExist = async ({ req, res, next }) => {
 
     next();
   } catch {
-    return res.status(401).send({ message: 'Invalid JWT Token' });
+    return res.status(401).send({
+      code: 'ACCESS_TOKEN_ERROR',
+      message: 'Invalid JWT Token'
+    });
   }
 }
 
@@ -37,7 +43,10 @@ const verifyToken = (req, res, next) => {
   const token = req.headers['x-access-token'];
 
   if (!token) {
-    return res.status(403).send({ message: 'No token provided.' });
+    return res.status(403).send({
+      code: 'ACCESS_TOKEN_ERROR',
+      message: 'Invalid JWT Token'
+    });
   }
 
   checkTokenWhenExist({ req, res, next });
