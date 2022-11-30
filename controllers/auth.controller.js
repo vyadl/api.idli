@@ -79,7 +79,12 @@ exports.signup = (req, res) => {
 
 exports.signin = async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.body.username })
+    const searchOption = req.body.username
+      ? { username: req.body.username }
+      : req.body.email
+        ? { email: req.body.email }
+        : null
+    const user = await User.findOne(searchOption)
       .populate({
         path: 'roles',
         model: Role,
@@ -87,7 +92,10 @@ exports.signin = async (req, res) => {
       });
 
     if (!user) {
-      return res.status(404).send({ message: 'User not found' });
+      return res.status(404).send({
+        code: 'NOT_FOUND_USER_ERROR',
+        message: 'User not found',
+      });
     }
 
     const isPasswordValid = bcrypt.compareSync(
@@ -98,6 +106,7 @@ exports.signin = async (req, res) => {
     if (user.deletedAt) {
       return res.status(410).send({
         accessToken: null,
+        code: 'DELETED_USER_ERROR',
         message: 'User was deleted',
       });
     }
@@ -105,6 +114,7 @@ exports.signin = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(404).send({
         accessToken: null,
+        code: 'CREDENTIALS_ERROR',
         message: 'Invalid credentials',
       });
     }
@@ -131,10 +141,14 @@ exports.signin = async (req, res) => {
 exports.refresh = async (req, res) => {
   try {
     const session = await Session.findOne({ accessToken: req.body.accessToken });
+    const isCorrectFingerprint = session.fingerprint === req.body.fingerprint;
+    const isCorrectExpiration = +session.refreshExpiredAt > +new Date();
+    const isCorrectRefreshToken = session.refreshToken === req.body.refreshToken;
 
-    const isValid = session.fingerprint === req.body.fingerprint
-      && +session.refreshExpiredAt > +new Date()
-      && session.refreshToken === req.body.refreshToken;
+    const isValid = isCorrectFingerprint
+      && isCorrectExpiration
+      && isCorrectRefreshToken;
+    const isWrongSensitiveThing = !isCorrectFingerprint || !isCorrectRefreshToken;
 
     if (isValid) {
       const user = await User.findById(session.userId)
@@ -155,8 +169,16 @@ exports.refresh = async (req, res) => {
         accessToken,
         refreshToken,
       });
-    } else {
-      return res.status(400).send('The request is invalid');
+    } else if (isWrongSensitiveThing) {
+      return res.status(400).send({
+        code: 'REFRESH_TOKEN_WRONG_ERROR',
+        message: 'Refresh token is invalid',
+      });
+    } else if (!isCorrectExpiration) {
+      return res.status(400).send({
+        code: 'REFRESH_TOKEN_EXPIRED_ERROR',
+        message: 'Refresh token is expired',
+      });
     }
   } catch (err) {
     resolve500Error(err, res);
@@ -221,7 +243,7 @@ exports.requestResetPassword = async (req, res) => {
         to: req.body.email,
         subject: 'Reset password',
         body: `Your validation code is <big>${code}</big>
-It will be valid for ${timeInMinutes} minutes`,
+It will be valid for ${timeInMinutes} minutes. Your username: ${user.username}`,
         isHtml: true,
       })
 
@@ -243,9 +265,9 @@ exports.resetPassword = async (req, res) => {
     const user = await User.findOne({ email: req.body.email });
 
     if (user) {
-      const isRequestValid = resetPasswordStorage.isValid(req.body.email, req.body.code);
+      const { isValid, code, message } = resetPasswordStorage.isValid(req.body.email, req.body.code);
 
-      if (isRequestValid) {
+      if (isValid) {
         user.password = createPasswordHash(req.body.password);
 
         await user.save();
@@ -267,7 +289,10 @@ exports.resetPassword = async (req, res) => {
 
         return res.status(200).send('The password is succesfully changed');
       } else {
-        return res.status(400).send('The request is invalid.');
+        return res.status(400).send({
+          code,
+          message,
+        });
       }
     } else {
       return res.status(400).send('The request is invalid.');
