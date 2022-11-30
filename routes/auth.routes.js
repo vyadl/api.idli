@@ -18,6 +18,7 @@ module.exports = function(app) {
       body('username').exists().isString().notEmpty(),
       validation.verifyBasicValidation,
       verifySignUp.checkDuplicationUsernameOrEmail,
+      verifySignUp.checkAsperandInUsername,
     ],
     controller.validateEmailForSignUp,
   );
