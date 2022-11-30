@@ -26,11 +26,23 @@ exports.signUpValidationStorage = {
   isValid(email, code) {
     const record = this.list[email];
 
-    if (record && record.code === code && record.expiredAt > +new Date()) {
-      return true;
+    if (!record || record.code !== code) {
+      return {
+        isValid: false,
+        code: 'SIGNUP_WRONG_CODE_ERROR',
+        message: 'Validation code for signup is wrong',
+      }
     }
 
-    return false;
+    if (record.expiredAt < +new Date()) {
+      return {
+        isValid: false,
+        code: 'SIGNUP_EXPIRED_CODE_ERROR',
+        message: 'Validation code is expired',
+      }
+    }
+
+    return { isValid: true };
   },
   delete(email) {
     if (this.list[email]) {

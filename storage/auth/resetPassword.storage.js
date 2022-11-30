@@ -26,11 +26,23 @@ exports.resetPasswordStorage = {
   isValid(email, code) {
     const record = this.list[email];
 
-    if (record && record.code === code && record.expiredAt > +new Date()) {
-      return true;
+    if (!record || record.code !== code) {
+      return {
+        isValid: false,
+        code: 'RESET_PASSWORD_WRONG_CODE_ERROR',
+        message: 'Validation code for reset password is wrong'
+      }
     }
 
-    return false;
+    if (record.expiredAt < +new Date()) {
+      return {
+        isValid: false,
+        code: 'RESET_PASSWORD_EXPIRED_CODE_ERROR',
+        message: 'Validation code for reset password is expired'
+      }
+    }
+
+    return { isValid: true };
   },
   delete(email) {
     if (this.list[email]) {
