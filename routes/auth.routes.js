@@ -32,6 +32,7 @@ module.exports = function(app) {
       validation.verifyBasicValidation,
       verifySignUp.checkValidationCode,
       verifySignUp.checkDuplicationUsernameOrEmail,
+      verifySignUp.checkAsperandInUsername,
       verifySignUp.checkIsEveryRoleExisted,
     ],
     controller.signup,
@@ -40,7 +41,6 @@ module.exports = function(app) {
   app.post(
     '/api/auth/signin',
     [
-      body('username').exists().isString().notEmpty(),
       body('password').exists().isString().notEmpty(),
       body('fingerprint').exists().isString().notEmpty(),
       validation.verifyBasicValidation,
