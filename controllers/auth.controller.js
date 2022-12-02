@@ -8,6 +8,7 @@ const { createPasswordHash, createNewSession, logout } = require('./actions/auth
 const { resetPasswordStorage } = require('./../storage/auth/resetPassword.storage');
 const { signUpValidationStorage } = require('./../storage/auth/signUpValidation.storage');
 const { sendEmail } = require('./../services/email');
+const { RESET_PASSWORD_CODE_DURATION_MINUTES } = require('./../config');
 
 exports.validateEmailForSignUp = (req, res) => {
   const { email } = req.body;
@@ -141,9 +142,9 @@ exports.signin = async (req, res) => {
 exports.refresh = async (req, res) => {
   try {
     const session = await Session.findOne({ accessToken: req.body.accessToken });
-    const isCorrectFingerprint = session.fingerprint === req.body.fingerprint;
-    const isCorrectExpiration = +session.refreshExpiredAt > +new Date();
-    const isCorrectRefreshToken = session.refreshToken === req.body.refreshToken;
+    const isCorrectFingerprint = session?.fingerprint === req.body.fingerprint;
+    const isCorrectExpiration = +session?.refreshExpiredAt > +new Date();
+    const isCorrectRefreshToken = session?.refreshToken === req.body.refreshToken;
 
     const isValid = isCorrectFingerprint
       && isCorrectExpiration
@@ -202,7 +203,10 @@ exports.changePassword = async (req, res) => {
     );
 
     if (!isPasswordValid) {
-      return res.status(400).send('The old password is incorrect');
+      return res.status(400).send({
+        code: 'WRONG_CURRENT_PASSWORD_ERROR',
+        message: 'The old password is incorrect',
+      });
     }
 
     const newPassword = createPasswordHash(req.body.newPassword);
@@ -235,26 +239,24 @@ exports.changePassword = async (req, res) => {
 exports.requestResetPassword = async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
-
+    console.log(user);
     if (user) {
-      const { code, timeInMinutes } = resetPasswordStorage.add(user.email);
+      const { code } = resetPasswordStorage.add(user.email);
 
       sendEmail({
         to: req.body.email,
         subject: 'Reset password',
         body: `Your validation code is <big>${code}</big>
-It will be valid for ${timeInMinutes} minutes. Your username: ${user.username}`,
+It will be valid for ${RESET_PASSWORD_CODE_DURATION_MINUTES} minutes. Your username: ${user.username}`,
         isHtml: true,
-      })
-
-      return res.status(200).send({
-        message: `The request is approved. Check your email for a link.
-The validation code will be valid for ${timeInMinutes} minutes`,
-        codeLifetimeInMinutes: timeInMinutes,
       });
-    } else {
-      return res.status(400);
     }
+
+    return res.status(200).send({
+      message: `The request is approved. Check your email for a link.
+The validation code will be valid for ${RESET_PASSWORD_CODE_DURATION_MINUTES} minutes`,
+      codeLifetimeInMinutes: RESET_PASSWORD_CODE_DURATION_MINUTES,
+    });
   } catch (err) {
     resolve500Error(err, res);
   }

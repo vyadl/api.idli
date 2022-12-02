@@ -1,5 +1,6 @@
 const { customAlphabet } = require('nanoid');
-const TIME_IN_MINUTES = 1;
+const { RESET_PASSWORD_CODE_DURATION_MINUTES } = require('./../../config');
+const TIME_IN_MINUTES = RESET_PASSWORD_CODE_DURATION_MINUTES;
 const FIVE_MINUTES_IN_MS = 1000 * 60 * TIME_IN_MINUTES;
 const TIME_FOR_EXPIRING = FIVE_MINUTES_IN_MS;
 
@@ -18,10 +19,7 @@ exports.resetPasswordStorage = {
       this.deleteAllExpired();
     }, 0);
 
-    return {
-      code,
-      timeInMinutes: TIME_IN_MINUTES,
-    };
+    return { code };
   },
   isValid(email, code) {
     const record = this.list[email];
