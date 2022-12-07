@@ -319,6 +319,7 @@ exports.logout = async (req, res) => {
     refreshToken,
     mode,
     fingerprint,
+    res,
   }).then(({ message }) => {
     return res.status(200).send(message);
   }).catch(({ message }) => {
