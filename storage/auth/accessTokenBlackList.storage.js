@@ -3,8 +3,8 @@ exports.accessTokenBlackListStorage = {
   isInList(accessToken) {
     return !!this.list[accessToken];
   },
-  add(accessToken, timeForExpiring) {
-    this.list[accessToken] = +new Date() + timeForExpiring;
+  add(accessToken, timeForExpiringInMs) {
+    this.list[accessToken] = +new Date() + timeForExpiringInMs;
 
     setTimeout(() => {
       this.deleteAllExpired();
