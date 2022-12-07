@@ -46,14 +46,18 @@ const createNewSession = async (user, fingerprint) => {
 
 const checkIsSessionValid = async ({ userId, accessToken, refreshToken, fingerprint }) => {
   const session = await Session.findOne({ accessToken });
+  const isCorrectUserId = session.userId === userId;
+  const isCorrectRefreshToken = session.refreshToken === refreshToken;
+  const isCorrectFingerprint = session.fingerprint === fingerprint
 
-  const isValid = session.userId === userId
-    && session.refreshToken === refreshToken
-    && session.fingerprint === fingerprint;
+  const isValid = isCorrectUserId
+    && isCorrectRefreshToken
+    && isCorrectFingerprint;
 
   return {
     currentSession: session,
     isValid,
+    invalidMessage: `${!session ? 'session with that accessToken not exist' : ''}/${!isCorrectUserId ? 'not correct userId' : ''}/${!isCorrectRefreshToken ? 'not correct refreshToken' : ''}/${!isCorrectFingerprint ? 'not correct fingerprint' : ''}`,
   };
 }
 
@@ -88,7 +92,7 @@ const logout = async ({
 
       return Promise.resolve({ message: modeMessages.all });
     } else {
-      const { isValid, currentSession }
+      const { isValid, invalidMessage, currentSession }
         = await checkIsSessionValid({ userId, accessToken, refreshToken, fingerprint });
 
       if (isValid) {
@@ -114,7 +118,7 @@ const logout = async ({
 
         return Promise.resolve({ message: modeMessages[mode] });
       } else {
-        return Promise.reject({ message: 'The data is invalid' });
+        return Promise.reject({ message: invalidMessage });
       }
     }
   } catch (err) {
