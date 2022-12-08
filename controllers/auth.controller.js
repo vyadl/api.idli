@@ -321,8 +321,8 @@ exports.logout = async (req, res) => {
     fingerprint,
     res,
   }).then(({ message }) => {
-    return res.status(200).send(message);
+    return res.status(200).send({ message });
   }).catch(({ message }) => {
-    return res.status(400).send(message);
+    return res.status(400).send({ code: 'LOGOUT_ERROR', message });
   });
 }
