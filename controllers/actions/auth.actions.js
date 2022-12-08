@@ -46,9 +46,10 @@ const createNewSession = async (user, fingerprint) => {
 
 const checkIsSessionValid = async ({ userId, accessToken, refreshToken, fingerprint }) => {
   const session = await Session.findOne({ accessToken });
-  const isCorrectUserId = session.userId === userId;
-  const isCorrectRefreshToken = session.refreshToken === refreshToken;
-  const isCorrectFingerprint = session.fingerprint === fingerprint
+
+  const isCorrectUserId = session?.userId === userId;
+  const isCorrectRefreshToken = session?.refreshToken === refreshToken;
+  const isCorrectFingerprint = session?.fingerprint === fingerprint
 
   const isValid = isCorrectUserId
     && isCorrectRefreshToken
@@ -57,6 +58,7 @@ const checkIsSessionValid = async ({ userId, accessToken, refreshToken, fingerpr
   return {
     currentSession: session,
     isValid,
+    isExist: !!session,
     invalidMessage: `${!session ? 'session with that accessToken not exist' : ''}/${!isCorrectUserId ? 'not correct userId' : ''}/${!isCorrectRefreshToken ? 'not correct refreshToken' : ''}/${!isCorrectFingerprint ? 'not correct fingerprint' : ''}`,
   };
 }
@@ -92,8 +94,12 @@ const logout = async ({
 
       return Promise.resolve({ message: modeMessages.all });
     } else {
-      const { isValid, invalidMessage, currentSession }
+      const { isValid, isExist, invalidMessage, currentSession }
         = await checkIsSessionValid({ userId, accessToken, refreshToken, fingerprint });
+
+      if (!isExist) {
+        return Promise.resolve({ message: 'You are already logged out' });
+      }
 
       if (isValid) {
         if (mode === 'allExceptCurrent') {
