@@ -18,7 +18,8 @@ exports.validateEmailForSignUp = (req, res) => {
   sendEmail({
     to: email,
     subject: 'Confirmation email for registration in Idli',
-    body: `Your validation code for registration is <big>${code}</big><br/>
+    body: `Your validation code for registration is:<br/>
+<big>${code}</big><br/>
 It will be valid for ${timeInMinutes} minutes.`,
     isHtml: true,
   });
@@ -246,15 +247,17 @@ exports.requestResetPassword = async (req, res) => {
       sendEmail({
         to: req.body.email,
         subject: 'Reset password',
-        body: `Your validation code is <big>${code}</big>
-It will be valid for ${RESET_PASSWORD_CODE_DURATION_MINUTES} minutes. Your username: ${user.username}`,
+        body: `Your validation code is<br/>
+<big>${code}</big><br/>
+It will be valid for ${RESET_PASSWORD_CODE_DURATION_MINUTES} minutes.<br/>
+Your username: ${user.username}`,
         isHtml: true,
       });
     }
 
     return res.status(200).send({
-      message: `The request is approved. Check your email for a link.
-The validation code will be valid for ${RESET_PASSWORD_CODE_DURATION_MINUTES} minutes`,
+      message: `The request is approved. Check your email for a validation code.
+It will be valid for ${RESET_PASSWORD_CODE_DURATION_MINUTES} minutes`,
       codeLifetimeInMinutes: RESET_PASSWORD_CODE_DURATION_MINUTES,
     });
   } catch (err) {
