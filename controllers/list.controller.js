@@ -30,7 +30,7 @@ exports.setItemsOrder = async (req, res) => {
       return res.status(400).send({ message: 'There are not correct items' });
     }
 
-    // list.items = itemIds.map(itemId => (mongoose.Types.ObjectId(itemId)));
+    list.items = itemIds.map(itemId => (mongoose.Types.ObjectId(itemId)));
     list.itemsUpdatedAt = now;
 
     await list.save();
