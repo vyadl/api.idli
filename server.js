@@ -36,6 +36,7 @@ const createApp = async () => {
   require('./routes/admin.routes')(app);
   require('./routes/list.routes')(app);
   require('./routes/item.routes')(app);
+  require('./routes/search.routes')(app);
 
   const PORT = process.env.PORT || 8088;
 
