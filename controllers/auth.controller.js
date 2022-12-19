@@ -240,7 +240,7 @@ exports.changePassword = async (req, res) => {
 exports.requestResetPassword = async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
-    console.log(user);
+
     if (user) {
       const { code } = resetPasswordStorage.add(user.email);
 
