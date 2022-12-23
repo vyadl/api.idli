@@ -7,22 +7,34 @@ exports.getItemsAndListsBySearch = async (req, res) => {
   try {
     const searchString = req.params.query;
     const isDeleted = req.query.deleted;
+    const deletedListsIdsRequest = List.find({
+      userId: req.userId,
+      deletedAt:{ $ne: null }
+    });
     const itemsDbRequest = Item.find({
       userId: req.userId,
       $text: { $search: `\"${searchString}\"` },
-      deletedAt: isDeleted ? { $ne: null } : null,
     });
     const listsDbRequest = List.find({
       userId: req.userId,
       $text: { $search: `\"${searchString}\"` },
-      deletedAt: isDeleted ? { $ne: null } : null,
     });
 
-    const [foundItems, foundLists] = await Promise.all([itemsDbRequest, listsDbRequest]);
+    const [foundItems, foundLists, deletedLists] =
+      await Promise.all([itemsDbRequest, listsDbRequest, deletedListsIdsRequest]);
+
+    const deletedListsIds = new Set(deletedLists.map(list => String(list._id)));
+
+    const filteredItems = foundItems.filter(item => {
+      return isDeleted
+        ? item.deletedAt || deletedListsIds.has(item.listId)
+        : !item.deletedAt && !deletedListsIds.has(item.listId);
+    });
+    const filteredLists = foundLists.filter(list => list.deletedAt);
 
     return res.status(200).send({
-      items: getArrayToClient(foundItems),
-      lists: getArrayToClient(foundLists),
+      items: getArrayToClient(filteredItems),
+      lists: getArrayToClient(filteredLists),
     });
   } catch (err) {
     resolve500Error(err, res);
