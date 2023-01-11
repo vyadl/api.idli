@@ -17,7 +17,7 @@ exports.validateEmailForSignUp = (req, res) => {
 
   sendEmail({
     to: email,
-    subject: 'Confirmation email for registration in Idli',
+    subject: 'IDLI: Registration confirmation',
     body: `Your validation code for registration is:<br/>
 <big>${code}</big><br/>
 It will be valid for ${timeInMinutes} minutes.`,
@@ -248,7 +248,7 @@ exports.requestResetPassword = async (req, res) => {
 
       sendEmail({
         to: req.body.email,
-        subject: 'Reset password',
+        subject: 'IDLI: Reset password',
         body: `Your validation code is<br/>
 <big>${code}</big><br/>
 It will be valid for ${RESET_PASSWORD_CODE_DURATION_MINUTES} minutes.<br/>

@@ -17,7 +17,7 @@ exports.sendEmail = ({
   isHtml = false,
 }) => {
   transporter.sendMail({
-    from: 'system@idli.space',
+    from: 'IDLI <system@idli.space>',
     to,
     subject,
     ...(isHtml ? { html: body } : { text: body}),
