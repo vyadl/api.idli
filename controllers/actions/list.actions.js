@@ -1,4 +1,5 @@
 const Item = require('../../models/item.model');
+const List = require('../../models/list.model');
 const { resolve500Error } = require('../../middlewares/validation');
 const { checkIsSomethingDeletedByIds } = require('../../utils/utils');
 
@@ -85,3 +86,15 @@ exports.getFieldsWithIds = fields => {
 
   return updatedFields;
 };
+
+
+exports.createListsManually = async (lists) => {
+  try {
+    const result = await List.insertMany(lists);
+
+    return result;
+  } catch (err) {
+    resolve500Error(err);
+  }
+}
+

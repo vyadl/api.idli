@@ -1,3 +1,5 @@
+const { createMascot } = require('./controllers/mascot.controller');
+
 require('dotenv').config();
 
 const createApp = async () => {
@@ -73,7 +75,7 @@ const createApp = async () => {
       process.exit();
     });
 
-  function initial() {
+  async function initial() {
     Role.estimatedDocumentCount((err, count) => {
       if (!err && count === 0) {
         new Role({
@@ -96,7 +98,11 @@ const createApp = async () => {
           echo('added "admin" to roles collection');
         });
       }
-    })
+    });
+
+    const mascotResult = await createMascot();
+
+    console.log(mascotResult);
   }
 };
 
