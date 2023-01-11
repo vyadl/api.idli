@@ -29,10 +29,17 @@ const checkTokenWhenExist = async ({ req, res, next }) => {
   }
 }
 
-const verifyTokenIfNotPublic = (req, res, next) => {
+const verifyTokenIfNotPublic = async (req, res, next) => {
   const isPublic = !req.isPrivateRequest;
 
   if (isPublic) {
+    try {
+      const token = req.headers['x-access-token'];
+      const result = await jwt.verify(token, SECRET_AUTH_KEY);
+
+      req.userId = result.id;
+    } catch {}
+
     return next();
   }
 

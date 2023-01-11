@@ -215,8 +215,11 @@ const getFilteredPopulatedItemForPublic = async populatedItem => {
   const filteredPopulatedLists = populatedItem.relatedLists?.filter(list => !list.isPrivate);
   const resultItem = {
     ...populatedItem,
-    ...filteredPopulatedItems,
-    relatedLists: filteredPopulatedLists,
+    _doc: {
+      ...populatedItem._doc,
+      ...filteredPopulatedItems,
+      relatedLists: filteredPopulatedLists,
+    }
   };
 
   Object.setPrototypeOf(resultItem, populatedItem);
@@ -250,7 +253,7 @@ const getPopulatedItemWithRelated = async ({ itemDbRequest, item, isItemBelongsT
 
   let populatedItem = await itemDbRequest.populate(populateOptions);
 
-  if (isItemBelongsToRequester) {
+  if (!isItemBelongsToRequester) {
     populatedItem = await getFilteredPopulatedItemForPublic(populatedItem);
   }
 
