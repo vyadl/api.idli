@@ -30,6 +30,8 @@ It will be valid for ${timeInMinutes} minutes.`,
   });
 }
 
+
+
 exports.signup = (req, res) => {
   const now = new Date();
   const user = new User({

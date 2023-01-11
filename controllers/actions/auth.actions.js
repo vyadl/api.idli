@@ -1,3 +1,4 @@
+const User = require('../../models/user.model');
 const Session = require('../../models/session.model');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -14,6 +15,12 @@ exports.ACCESS_TOKEN_LIFETIME = ACCESS_TOKEN_LIFETIME;
 
 const createPasswordHash = (password) => {
   return bcrypt.hashSync(password, 8);
+}
+
+const createUserManually = async (user) => {
+  const newUser = new User(user);
+
+  await newUser.save();
 }
 
 const createNewSession = async (user, fingerprint) => {
@@ -137,4 +144,5 @@ module.exports = {
   createNewSession,
   checkIsSessionValid,
   logout,
+  createUserManually,
 }
