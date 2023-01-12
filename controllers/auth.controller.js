@@ -87,7 +87,7 @@ exports.signin = async (req, res) => {
       ? { username: req.body.username }
       : req.body.email
         ? { email: req.body.email }
-        : null
+        : null;
     const user = await User.findOne(searchOption)
       .populate({
         path: 'roles',

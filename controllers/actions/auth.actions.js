@@ -109,7 +109,7 @@ const logout = async ({
       }
 
       if (isValid) {
-        if (mode === 'allExceptCurrent') {
+        if (['all', 'allExceptCurrent'].includes(mode)) {
           const sessions = (await Session.find({ userId })).filter(session => {
             return String(session._id) !== String(currentSession._id);
           });
