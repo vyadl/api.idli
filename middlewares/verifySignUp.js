@@ -2,6 +2,7 @@ const db = require('../models');
 const ROLES = db.ROLES;
 const User = db.user;
 const { resolve500Error } = require('./../middlewares/validation');
+const { signUpValidationStorage } = require('./../storage/auth/signUpValidation.storage');
 
 const checkDuplicationUsernameOrEmail = (req, res, next) => {
   User.findOne({
@@ -43,9 +44,38 @@ const checkIsEveryRoleExisted = (req, res, next) => {
   next();
 };
 
+const checkValidationCode = (req, res, next) => {
+  const { email, validationCode } = req.body;
+  const { isValid, code, message } = signUpValidationStorage.isValid(email, validationCode);
+
+  if (!isValid) {
+    return res.status(400).send({
+      code,
+      message,
+    });
+  }
+
+  next();
+}
+
+const checkAsperandInUsername = (req, res, next) => {
+  const { username } = req.body;
+
+  if (username.includes('@')) {
+    return res.status(400).send({
+      code: 'SIGNUP_ASPERANDLESS_ERROR',
+      message: 'Username should not have @ sign.',
+    });
+  }
+
+  next();
+}
+
 const verifySignUp = {
   checkDuplicationUsernameOrEmail,
   checkIsEveryRoleExisted,
+  checkValidationCode,
+  checkAsperandInUsername,
 }
 
 module.exports = verifySignUp;

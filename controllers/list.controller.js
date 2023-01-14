@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const db = require('../models');
 const User = db.user;
 const List = require('../models/list.model');
@@ -30,7 +31,7 @@ exports.setItemsOrder = async (req, res) => {
       return res.status(400).send({ message: 'There are not correct items' });
     }
 
-    // list.items = itemIds.map(itemId => (mongoose.Types.ObjectId(itemId)));
+    list.items = itemIds.map(itemId => (mongoose.Types.ObjectId(itemId)));
     list.itemsUpdatedAt = now;
 
     await list.save();
@@ -92,8 +93,9 @@ exports.getList = async (req, res) => {
       model: Item,
     }]);
 
+    const isListBelongToUser = String(list.userId) === req.userId;
 
-    if (list.isPrivate && (!req.userId || req.userId !== list.userId)) {
+    if (list.isPrivate && !isListBelongToUser) {
       return res.status(400).send({ message: 'List is private' });
     }
 

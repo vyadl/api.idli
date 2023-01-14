@@ -1,5 +1,5 @@
 const { body, param, oneOf } = require('express-validator');
-const { authJwt, verifyList, validation } = require('./../middlewares');
+const { authJwt, verifyList, validation, verifyPrivacy } = require('./../middlewares');
 const controller = require('./../controllers/item.controller');
 
 module.exports = function(app) {
@@ -16,6 +16,8 @@ module.exports = function(app) {
     [
       param('id').exists().isString(),
       validation.verifyBasicValidation,
+      verifyPrivacy.saveIsItemPrivateInReq,
+      authJwt.verifyTokenIfNotPublic,
     ],
     controller.getItem,
   );
@@ -24,7 +26,7 @@ module.exports = function(app) {
     '/api/item/add/:listid',
     [
       authJwt.verifyToken,
-      body('title').exists().isString().notEmpty(),
+      body('title').exists().isString(),
       body('details').if(body('details').exists()).isString(),
       validation.verifyBasicValidation,
       verifyList.isListBelongToUser,
@@ -35,10 +37,10 @@ module.exports = function(app) {
 
   app.post(
     '/api/items/add-many/:listid',
+    // here "-many" was added for easier recognizing and preventing confusing
     [
       authJwt.verifyToken,
       body('items').exists().isArray({ min: 1 }),
-      // here "-many" was added for easier recognizing and preventing confusing
       validation.verifyBasicValidation,
       verifyList.isListBelongToUser,
       verifyList.isListExist,
@@ -51,9 +53,20 @@ module.exports = function(app) {
     [
       authJwt.verifyToken,
       param('listid').isString(),
-      body('title').if(body('title').exists()).isString().notEmpty(),
       body('details').if(body('details').exists()).isString(),
       body('tags').if(body('tags').exists()).isArray(),
+      body('relatedItems')
+        .if(
+            body('relatedItems').exists({checkFalsy: true})
+          )
+        .isArray()
+        .custom((value) => value.every(item => typeof item === 'string')),
+      body('relatedLists')
+        .if(
+            body('relatedLists').exists({checkFalsy: true})
+          )
+        .isArray()
+        .custom((value) => value.every(item => typeof item === 'string')),
       oneOf([
         body('title').exists(),
         body('details').exists(),
@@ -63,6 +76,7 @@ module.exports = function(app) {
         body('relatedLists').exists(),
       ], 'At least one field to change is required (title, details, category, tags, related items, related lists)'),
       validation.verifyBasicValidation,
+      verifyList.fetchAndSaveListInReq,
       verifyList.isListBelongToUser,
       verifyList.isListExist,
     ],
@@ -73,6 +87,7 @@ module.exports = function(app) {
     '/api/item/delete/:listid/:id',
     [
       authJwt.verifyToken,
+      verifyList.fetchAndSaveListInReq,
       verifyList.isListBelongToUser,
       verifyList.isListExist,
     ],

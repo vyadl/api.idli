@@ -23,5 +23,6 @@ const schema = new mongoose.Schema({
 
 schema.method('toClient', toClient);
 schema.method('listToClientPopulated', listToClientPopulated);
+schema.index({ title: 'text' });
 
 module.exports = mongoose.model('List', schema);

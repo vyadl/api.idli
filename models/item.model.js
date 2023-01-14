@@ -33,5 +33,9 @@ const schema = new mongoose.Schema({
 
 schema.method('toClient', toClient);
 schema.method('itemToClientPopulated', itemToClientPopulated);
+schema.index({
+  title: 'text',
+  details: 'text',
+});
 
 module.exports = mongoose.model('Item', schema);

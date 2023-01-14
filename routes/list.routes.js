@@ -1,5 +1,5 @@
 const { body, param, oneOf } = require('express-validator');
-const { authJwt, verifyList, validation } = require('./../middlewares');
+const { authJwt, verifyList, validation, verifyPrivacy } = require('./../middlewares');
 const controller = require('./../controllers/list.controller');
 
 module.exports = function(app) {
@@ -11,7 +11,11 @@ module.exports = function(app) {
     next();
   });
 
-  app.get('/api/lists', [authJwt.verifyToken], controller.getListsForCurrentUser);
+  app.get('/api/lists', [
+      authJwt.verifyToken
+    ],
+    controller.getListsForCurrentUser,
+  );
 
   app.post('/api/list/public-titles', [
       body('ids').exists().isArray()
@@ -20,15 +24,10 @@ module.exports = function(app) {
   );
 
   app.get('/api/list/:id', [
-      authJwt.verifyToken,
-      authJwt.getUserId,
+      verifyList.fetchAndSaveListInReq,
       verifyList.isListExist,
-    ],
-    controller.getList,
-  );
-
-  app.get('/api/list/public/:id', [
-      verifyList.isListExist,
+      verifyPrivacy.saveIsListPrivateInReq,
+      authJwt.verifyTokenIfNotPublic,
     ],
     controller.getList,
   );
@@ -43,10 +42,10 @@ module.exports = function(app) {
   app.post(
     '/api/list/add',
     [
+      authJwt.verifyToken,
       body('title').exists().isString().notEmpty(),
       body('isPrivate').if(body('isPrivate').exists()).isBoolean(),
       validation.verifyBasicValidation,
-      authJwt.verifyToken,
     ],
     controller.addList,
   );
@@ -54,6 +53,7 @@ module.exports = function(app) {
   app.patch(
     '/api/list/update/:listid',
     [
+      authJwt.verifyToken,
       param('listid').isString(),
       body('isPrivate').if(body('isPrivate').exists()).isBoolean(),
       body('categories').if(body('categories').exists()).isArray(),
@@ -66,7 +66,7 @@ module.exports = function(app) {
         body('title').exists(),
       ], 'At least one field to change is required (title, isPrivate, tags, categories)'),
       validation.verifyBasicValidation,
-      authJwt.verifyToken,
+      verifyList.fetchAndSaveListInReq,
       verifyList.isListBelongToUser,
       verifyList.isListExist,
     ],
@@ -77,6 +77,7 @@ module.exports = function(app) {
     '/api/list/delete/:listid',
     [
       authJwt.verifyToken,
+      verifyList.fetchAndSaveListInReq,
       verifyList.isListBelongToUser,
       verifyList.isListExist,
     ],

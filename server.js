@@ -1,3 +1,5 @@
+const { createMascot } = require('./controllers/mascot.controller');
+
 require('dotenv').config();
 
 const createApp = async () => {
@@ -6,6 +8,7 @@ const createApp = async () => {
   const express = require('express');
   const bodyParser = require('body-parser');
   const cors = require('cors');
+  const nocache = require("nocache");
 
   const app = express();
 
@@ -24,6 +27,7 @@ const createApp = async () => {
     limit: '50mb',
     extended: true,
   }));
+  app.use(nocache());
 
   app.get('/', (req, res) => {
     res.json({ message: 'Welcome to idli application' })
@@ -34,6 +38,8 @@ const createApp = async () => {
   require('./routes/admin.routes')(app);
   require('./routes/list.routes')(app);
   require('./routes/item.routes')(app);
+  require('./routes/search.routes')(app);
+  require('./routes/mascot.routes')(app);
 
   const PORT = process.env.PORT || 8088;
 
@@ -70,7 +76,7 @@ const createApp = async () => {
       process.exit();
     });
 
-  function initial() {
+  async function initial() {
     Role.estimatedDocumentCount((err, count) => {
       if (!err && count === 0) {
         new Role({
@@ -93,7 +99,11 @@ const createApp = async () => {
           echo('added "admin" to roles collection');
         });
       }
-    })
+    });
+
+    const mascotResult = await createMascot();
+
+    console.log(mascotResult);
   }
 };
 

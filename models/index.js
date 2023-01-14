@@ -10,6 +10,7 @@ db.user = require('./user.model');
 db.role = require('./role.model');
 db.list = require('./list.model');
 db.item = require('./item.model');
+db.session = require('./session.model');
 
 db.ROLES = ['user', 'admin'];
 
