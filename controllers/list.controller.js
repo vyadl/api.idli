@@ -22,16 +22,32 @@ exports.setItemsOrder = async (req, res) => {
   const now = new Date();
 
   try {
-    const list = await List.findById(listId);
-    const oldItemIdsSorted = [...list.items].sort().map(item => item.toString());
-    const newItemIdsSorted = [...itemIds].sort();
-    const isValidItemIdsArray = oldItemIdsSorted.every((itemId, i) => itemId === newItemIdsSorted[i]);
+    const list = await List
+      .findById(listId)
+      .populate({
+        path: 'items',
+        model: Item,
+      });
+    const deletedItemIds = list.items
+      .filter(item => item.deletedAt)
+      .map(item => item._id.toString());
+    const oldItemIdsSorted = list.items
+      .filter(item => !item.deletedAt)
+      .map(item => item._id.toString())
+      .sort();
+    const newItemIdsSorted = [...itemIds]
+      .sort();
+    const isValidItemIdsArray = oldItemIdsSorted
+      .every((itemId, i) => itemId === newItemIdsSorted[i]);
 
     if (!isValidItemIdsArray) {
       return res.status(400).send({ message: 'There are not correct items' });
     }
 
-    list.items = itemIds.map(itemId => (mongoose.Types.ObjectId(itemId)));
+    list.items = [
+      ...itemIds,
+      ...deletedItemIds,
+    ];
     list.itemsUpdatedAt = now;
 
     await list.save();
