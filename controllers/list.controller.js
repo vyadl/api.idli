@@ -115,13 +115,12 @@ exports.getList = async (req, res) => {
       return res.status(400).send({ message: 'List is private' });
     }
 
-    if (!isListBelongToUser) {
-      const user = await User.findById(list.userId);
+    const user = await User.findById(String(list.userId));
 
-      list.userName = user.username;
-    }
-
-    res.status(200).send(list.listToClientPopulated());
+    res.status(200).send({
+      ...list.listToClientPopulated(),
+      username: user.username,
+    });
   } catch (err) {
     resolve500Error(err, res);
   }
