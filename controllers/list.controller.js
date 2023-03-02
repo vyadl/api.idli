@@ -115,7 +115,12 @@ exports.getList = async (req, res) => {
       return res.status(400).send({ message: 'List is private' });
     }
 
-    res.status(200).send(list.listToClientPopulated());
+    const user = await User.findById(list.userId);
+
+    res.status(200).send({
+      ...list.listToClientPopulated(),
+      username: user?.username,
+    });
   } catch (err) {
     resolve500Error(err, res);
   }
