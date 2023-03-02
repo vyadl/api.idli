@@ -13,11 +13,11 @@ exports.getItemsAndListsBySearch = async (req, res) => {
     });
     const itemsDbRequest = Item.find({
       userId: req.userId,
-      $text: { $search: `\"${searchString}\"` },
+      $text: { $search: `"${searchString}"` },
     });
     const listsDbRequest = List.find({
       userId: req.userId,
-      $text: { $search: `\"${searchString}\"` },
+      $text: { $search: `"${searchString}"` },
     });
 
     const [foundItems, foundLists, deletedLists] =
@@ -30,7 +30,7 @@ exports.getItemsAndListsBySearch = async (req, res) => {
         ? item.deletedAt || deletedListsIds.has(item.listId)
         : !item.deletedAt && !deletedListsIds.has(item.listId);
     });
-    const filteredLists = foundLists.filter(list => list.deletedAt);
+    const filteredLists = foundLists.filter(list => !list.deletedAt);
 
     return res.status(200).send({
       items: getArrayToClient(filteredItems),
