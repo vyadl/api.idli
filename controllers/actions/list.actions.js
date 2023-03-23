@@ -98,3 +98,31 @@ exports.createListsManually = async (lists) => {
   }
 }
 
+exports.deleteListIdsFromOriginListsForBatchDeleting = async (ids) => {
+  const lists = await List.find({
+    _id: { $in: ids },
+  });
+
+  await Promise.all(lists.map(async (list) => {
+    list.lists = list.lists.filter(listId => !ids.includes(listId));
+
+    await list.save();
+  }));
+}
+
+exports.deleteChildrenLists = async function deleteChildrenLists(ids) {
+  const lists = await List.find({ _id: { $in: ids } });
+  const childrenLists = await List.find({ _id: { $in: lists.reduce((result, list) => {
+    if (list.lists?.length) {
+      result = [...result, list.lists];
+    }
+
+    return result;
+  }, []) } });
+
+  await List.deleteMany({ _id: { $in: ids } });
+
+  if (childrenLists.length) {
+    await deleteChildrenLists(childrenLists.map(list => String(list._id)));
+  }
+}
