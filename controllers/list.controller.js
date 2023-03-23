@@ -6,7 +6,9 @@ const Item = require('../models/item.model');
 const { resolve500Error, handleUserValidation } = require('./../middlewares/validation');
 const {
   removeDeletedTagsAndCategoriesFromItems,
+  deleteListIdsFromOriginListsForBatchDeleting,
   getFieldsWithIds,
+  deleteChildrenLists,
 } = require('./actions/list.actions');
 const {
   deleteRelatedAndReferringRecordsForBatchItemsDeleting,
@@ -38,8 +40,11 @@ exports.setItemsOrder = async (req, res) => {
     const newItemIdsSorted = [...itemIds]
       .sort();
     const isValidItemIdsArray = oldItemIdsSorted
-      .every((itemId, i) => itemId === newItemIdsSorted[i]);
-
+      .every((itemId, i) => itemId === String(newItemIdsSorted[i]));
+      console.log(list);
+      console.log(deletedItemIds);
+    console.log(oldItemIdsSorted);
+    console.log(newItemIdsSorted);
     if (!isValidItemIdsArray) {
       return res.status(400).send({ message: 'There are not correct items' });
     }
@@ -105,6 +110,11 @@ exports.getList = async (req, res) => {
       model: Item,
     },
     {
+      path: 'lists',
+      model: List,
+      select: ['_id', 'title', 'deletedAt'],
+    },
+    {
       path: 'referringItems',
       model: Item,
     }]);
@@ -152,23 +162,37 @@ exports.addList = async (req, res) => {
   const {
     tags: reqTags,
     categories: reqCategories,
-    title,
     isPrivate,
+    originListId,
   } = req.body;
+  let { title } = req.body;
   const now = new Date();
   const isListWithSameTitleExist = !!(await List.find({
     title,
     userId: req.userId,
+    originListId,
     deletedAt: null,
   })).length;
+  const currentScopeTitles = (await List.find({
+    userId: req.userId,
+    originListId,
+    deletedAt: null,
+  })).map(list => list.title);
+  const originList = await List.findById(originListId);
   let tags = [];
   let categories = [];
 
   if (isListWithSameTitleExist) {
-    return res.status(400).send({ message: 'You already have a list with this title' });
+    (function createNewTitle() {
+      title = `${title} (copy)`;
+
+      if (currentScopeTitles.includes(title)) {
+        createNewTitle();
+      }
+    })();
   }
 
-  if (!(reqTags.length && reqTags[0].id === null)) {
+  if (reqTags?.length && reqTags[0].id === null) {
   // if ids for tags and categories are predefined (it happens with test-data)
   // we don't go in this condition
     if (reqTags?.length) {
@@ -196,6 +220,7 @@ exports.addList = async (req, res) => {
     deletedAt: null,
     itemsUpdatedAt: now,
     items: [],
+    originListId,
     title,
     tags,
     categories,
@@ -203,6 +228,12 @@ exports.addList = async (req, res) => {
 
   try {
     const savedList = await list.save();
+
+    if (originListId) {
+      originList.lists = [...(originList.lists ? originList.lists : []), String(savedList._id)];
+
+      await originList.save();
+    }
 
     return res.status(200).send(savedList.toClient());
   } catch (err) {
@@ -213,13 +244,14 @@ exports.addList = async (req, res) => {
 exports.updateList = async (req, res) => {
   const isListWithSameTitleExist = !!(await List.find({
     title: req.body.title,
+    originListId: req.body.originListId,
     userId: req.userId,
     deletedAt: null,
     _id: { $ne: req.params.listid },
   })).length;
 
   if (isListWithSameTitleExist) {
-    return res.status(400).send({ message: 'You already have a list with this title' });
+    return res.status(400).send({ message: 'You already have a list with this title in this scope' });
   }
 
   try {
@@ -276,6 +308,7 @@ exports.restoreList = async (req, res) => {
     const isListWithSameTitleExist = !!(await List.find({
       userId: req.userId,
       title: listForRestore.title,
+      originListId: req.originListId,
       deletedAt: null,
     })).length;
 
@@ -309,11 +342,24 @@ exports.getDeletedLists = async (req, res) => {
 
 exports.hardDeleteList = async (req, res) => {
   try {
-    const list = await List.findById(req.params.listid);
+    const id = req.params.listid;
+    const list = await List.findById(id);
 
     await deleteRelatedAndReferringRecordsForBatchItemsDeleting(list.items.map(id => String(id)));
     await deleteReferringItemsInDeletingList(list._id);
     await Item.deleteMany({ _id: { $in: toObjectId(list.items) }});
+
+    if (list.originListId) {
+      const originList = await List.findById(list.originListId);
+
+      originList.lists = originList?.lists.filter(item => item !== id);
+      await originList.save();
+    }
+
+    if (list.lists?.length) {
+      deleteChildrenLists(list.lists);
+    }
+
     await list.remove();
 
     return res.status(200).send({ message: 'The list is successfully deleted' });
@@ -333,6 +379,16 @@ exports.hardDeleteAllLists = async (req, res) => {
 
     await deleteRelatedAndReferringRecordsForBatchItemsDeleting(itemsForDeleting.map(id => String(id)));
     await deleteReferringItemsforBatchListDeleting(lists.map(list => String(list._id)));
+    await deleteListIdsFromOriginListsForBatchDeleting(
+      lists.filter(item => item.originListId).map(list => String(list._id))
+    );
+    await deleteChildrenLists(lists.reduce((result, list) => {
+      if (list.lists?.length) {
+        result = [...result, ...list.lists];
+      }
+
+      return result;
+    }, []));
     
     await Item.deleteMany({ _id: { $in: toObjectId(itemsForDeleting) }});
     await List.deleteMany({

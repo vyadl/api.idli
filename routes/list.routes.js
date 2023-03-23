@@ -64,6 +64,7 @@ module.exports = function(app) {
         body('categories').exists(),
         body('tags').exists(),
         body('title').exists(),
+        body('originListId').exists(),
       ], 'At least one field to change is required (title, isPrivate, tags, categories)'),
       validation.verifyBasicValidation,
       verifyList.fetchAndSaveListInReq,

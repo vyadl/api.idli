@@ -39,7 +39,7 @@ const getArrayToClient = array => {
 const listToClientPopulated = function(isDeletedInclude = false) {
   const obj = toClient.call(this);
 
-  ['items', 'referringItems'].forEach(field => {
+  ['items', 'referringItems', 'lists'].forEach(field => {
     if (obj[field]?.length) {
       obj[field] = this[field].map(item => toClient.call(item));
     }
@@ -47,6 +47,7 @@ const listToClientPopulated = function(isDeletedInclude = false) {
 
   if (!isDeletedInclude) {
     obj.items = obj.items.filter(item => !item.deletedAt);
+    obj.lists = obj.lists.filter(item => !item.deletedAt);
   }
 
   return obj;
