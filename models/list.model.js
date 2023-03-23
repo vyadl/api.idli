@@ -14,6 +14,11 @@ const schema = new mongoose.Schema({
   updatedAt: Date,
   deletedAt: Date,
   itemsUpdatedAt: Date,
+  originListId: {
+    type: String,
+    default: null,
+  },
+  lists: [String],
   items: [String],
   referringItems: {
     type: [String],
