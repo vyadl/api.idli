@@ -41,10 +41,7 @@ exports.setItemsOrder = async (req, res) => {
       .sort();
     const isValidItemIdsArray = oldItemIdsSorted
       .every((itemId, i) => itemId === String(newItemIdsSorted[i]));
-      console.log(list);
-      console.log(deletedItemIds);
-    console.log(oldItemIdsSorted);
-    console.log(newItemIdsSorted);
+
     if (!isValidItemIdsArray) {
       return res.status(400).send({ message: 'There are not correct items' });
     }
