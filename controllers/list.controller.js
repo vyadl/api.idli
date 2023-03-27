@@ -102,19 +102,34 @@ exports.getPublicListsByUserId = async (req, res) => {
 
 exports.getList = async (req, res) => {
   try {
-    const list = await List.findById(req.params.id).populate([{
-      path: 'items',
-      model: Item,
-    },
-    {
-      path: 'lists',
-      model: List,
-      select: ['_id', 'title', 'deletedAt'],
-    },
-    {
-      path: 'referringItems',
-      model: Item,
-    }]);
+    const { noItems, noLists, noReferringItems } = req.query;
+    const findOptions = {
+      ...(noItems ? { items: 0 } : null),
+      ...(noLists ? { lists: 0 } : null),
+      ...(noReferringItems ? { referringItems: 0 } : null),
+    };
+    const populationOptions = [
+      !req.body.noItems
+        ? {
+            path: 'items',
+            model: Item,
+          }
+        : null,
+      !req.body.noLists
+        ? {
+            path: 'lists',
+            model: List,
+            select: ['_id', 'title', 'deletedAt'],
+          }
+        : null,
+      !req.body.noReferringItems
+        ? {
+            path: 'referringItems',
+            model: Item,
+          }
+        : null,
+      ].filter(item => item);
+    const list = await List.findById(req.params.id, findOptions).populate(populationOptions);
 
     const isListBelongToUser = String(list.userId) === req.userId;
 
