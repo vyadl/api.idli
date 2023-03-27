@@ -74,7 +74,7 @@ exports.getListsForCurrentUser = async (req, res) => {
     const lists = await List.find({
       userId: req.userId,
       deletedAt: null,
-    });
+    }, { items: 0 });
 
     return res.status(200).send(getArrayToClient(lists));
   } catch (err) {
@@ -88,11 +88,11 @@ exports.getPublicListsByUserId = async (req, res) => {
     
     handleUserValidation(user, res);
 
-    const lists = List.find({
+    const lists = await List.find({
       userId: req.params.userid,
       isPrivate: false,
       deletedAt: null,
-    });
+    }, { items: 0 });
 
     return res.status(200).send(getArrayToClient(lists));
   } catch (err) {
@@ -160,22 +160,22 @@ exports.addList = async (req, res) => {
     tags: reqTags,
     categories: reqCategories,
     isPrivate,
-    originListId,
+    parentListId,
   } = req.body;
   let { title } = req.body;
   const now = new Date();
   const isListWithSameTitleExist = !!(await List.find({
     title,
     userId: req.userId,
-    originListId,
+    parentListId,
     deletedAt: null,
   })).length;
   const currentScopeTitles = (await List.find({
     userId: req.userId,
-    originListId,
+    parentListId,
     deletedAt: null,
   })).map(list => list.title);
-  const originList = await List.findById(originListId);
+  const originList = await List.findById(parentListId);
   let tags = [];
   let categories = [];
 
@@ -217,7 +217,7 @@ exports.addList = async (req, res) => {
     deletedAt: null,
     itemsUpdatedAt: now,
     items: [],
-    originListId,
+    parentListId,
     title,
     tags,
     categories,
@@ -226,7 +226,7 @@ exports.addList = async (req, res) => {
   try {
     const savedList = await list.save();
 
-    if (originListId) {
+    if (parentListId) {
       originList.lists = [...(originList.lists ? originList.lists : []), String(savedList._id)];
 
       await originList.save();
@@ -241,7 +241,7 @@ exports.addList = async (req, res) => {
 exports.updateList = async (req, res) => {
   const isListWithSameTitleExist = !!(await List.find({
     title: req.body.title,
-    originListId: req.body.originListId,
+    parentListId: req.body.parentListId,
     userId: req.userId,
     deletedAt: null,
     _id: { $ne: req.params.listid },
@@ -305,7 +305,7 @@ exports.restoreList = async (req, res) => {
     const isListWithSameTitleExist = !!(await List.find({
       userId: req.userId,
       title: listForRestore.title,
-      originListId: req.originListId,
+      parentListId: req.parentListId,
       deletedAt: null,
     })).length;
 
@@ -329,7 +329,7 @@ exports.getDeletedLists = async (req, res) => {
     const lists = await List.find({
       userId: req.userId,
       deletedAt: { $ne: null },
-    });
+    }, { items: 0 });
 
     return res.status(200).send(getArrayToClient(lists));
   } catch (err) {
@@ -346,8 +346,8 @@ exports.hardDeleteList = async (req, res) => {
     await deleteReferringItemsInDeletingList(list._id);
     await Item.deleteMany({ _id: { $in: toObjectId(list.items) }});
 
-    if (list.originListId) {
-      const originList = await List.findById(list.originListId);
+    if (list.parentListId) {
+      const originList = await List.findById(list.parentListId);
 
       originList.lists = originList?.lists.filter(item => item !== id);
       await originList.save();
@@ -377,7 +377,7 @@ exports.hardDeleteAllLists = async (req, res) => {
     await deleteRelatedAndReferringRecordsForBatchItemsDeleting(itemsForDeleting.map(id => String(id)));
     await deleteReferringItemsforBatchListDeleting(lists.map(list => String(list._id)));
     await deleteListIdsFromOriginListsForBatchDeleting(
-      lists.filter(item => item.originListId).map(list => String(list._id))
+      lists.filter(item => item.parentListId).map(list => String(list._id))
     );
     await deleteChildrenLists(lists.reduce((result, list) => {
       if (list.lists?.length) {

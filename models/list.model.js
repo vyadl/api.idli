@@ -14,7 +14,7 @@ const schema = new mongoose.Schema({
   updatedAt: Date,
   deletedAt: Date,
   itemsUpdatedAt: Date,
-  originListId: {
+  parentListId: {
     type: String,
     default: null,
   },
