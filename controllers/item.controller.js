@@ -11,6 +11,7 @@ const {
 } = require('./actions/relatedRecords.actions');
 const { toObjectId } = require('./../utils/databaseUtils');
 const { getArrayToClient } = require('./../utils/utils');
+const { LIMIT_ITEMS_IN_LIST } = require('./../config.js');
 
 const VALID_KEYS_FOR_UPDATE = [
   'title',
@@ -74,9 +75,17 @@ exports.getItem = async (req, res) => {
 exports.addItem = async (req, res) => {
   const { title, details, tags, category, relatedItems, relatedLists, temporaryId } = req.body;
   const { listid: listId } = req.params;
+  const list = await List.findById(listId);
+
+  if (list.items.length + 1 > LIMIT_ITEMS_IN_LIST) {
+    return res.status(400).send({
+      code: 'ITEMS_IN_LIST_LIMIT_ERROR',
+      message: `New item can't be added. The list reached the limit. Limit is ${LIMIT_ITEMS_IN_LIST} items in a list.`
+    });
+  }
 
   if (!listId) {
-    res.status(400).send({ message: 'List ID is required' });
+    return res.status(400).send({ message: 'List ID is required' });
   }
 
   const now = new Date();
@@ -96,8 +105,6 @@ exports.addItem = async (req, res) => {
   });
 
   try {
-    const list = await List.findById(listId);
-
     list.items.push(item._id);
     list.itemsUpdatedAt = now;
 
@@ -157,8 +164,16 @@ exports.addManyItems = async (req, res) => {
   );
 
   try {
-    const addedItems = await Item.insertMany(preparedItems);
     const list = await List.findById(listId);
+
+    if (list.items.length + preparedItems.length > LIMIT_ITEMS_IN_LIST) {
+      return res.status(400).send({
+        code: 'ITEMS_IN_LIST_LIMIT_ERROR',
+        message: `New items can't be added. After adding the list exceeds limit. Limit is ${LIMIT_ITEMS_IN_LIST} items in a list.`
+      });
+    }
+
+    const addedItems = await Item.insertMany(preparedItems);
 
     addedItems.forEach(({ _id }) => {
       list.items.push(_id);
