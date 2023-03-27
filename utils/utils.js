@@ -46,8 +46,8 @@ const listToClientPopulated = function(isDeletedInclude = false) {
   });
 
   if (!isDeletedInclude) {
-    obj.items = obj.items.filter(item => !item.deletedAt);
-    obj.lists = obj.lists.filter(item => !item.deletedAt);
+    obj.items = obj.items?.filter(item => !item.deletedAt);
+    obj.lists = obj.lists?.filter(item => !item.deletedAt);
   }
 
   return obj;
