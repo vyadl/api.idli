@@ -54,14 +54,13 @@ exports.setItemsOrder = async (req, res) => {
 
     await list.save();
 
-    const populatedList = await List.findById(listId).populate([{
-      path: 'items',
-      model: Item,
-    },
-    {
-      path: 'referringItems',
-      model: Item,
-    }]);
+    const populatedList = await List
+      .findById(listId)
+      .populate([{
+        path: 'items',
+        model: Item,
+      }])
+      .select(['items', '_id', 'updatedAt', 'itemsUpdatedAt', '__v']);
 
     res.status(200).send(populatedList.listToClientPopulated());
   } catch(err) {
@@ -285,16 +284,15 @@ exports.updateList = async (req, res) => {
 
     await removeDeletedTagsAndCategoriesFromItems({ list: oldList, req, res });
 
-    const populatedList = await List.findById(updatedList._id).populate([{
-      path: 'items',
-      model: Item,
-    },
-    {
-      path: 'referringItems',
-      model: Item,
-    }]);
+    const populatedList = await List.find({
+      _id: updatedList._id,
+    }, {
+      items: 0,
+      referringItems: 0,
+      lists: 0,
+    });
 
-    return res.status(200).send(populatedList.listToClientPopulated());
+    return res.status(200).send(populatedList.toClient());
   } catch(err) {
     resolve500Error(err, res);
   }
