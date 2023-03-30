@@ -284,15 +284,15 @@ exports.updateList = async (req, res) => {
 
     await removeDeletedTagsAndCategoriesFromItems({ list: oldList, req, res });
 
-    const populatedList = await List.find({
+    const resultList = (await List.findById({
       _id: updatedList._id,
     }, {
       items: 0,
       referringItems: 0,
       lists: 0,
-    });
+    }))[0];
 
-    return res.status(200).send(populatedList.toClient());
+    return res.status(200).send(resultList.toClient());
   } catch(err) {
     resolve500Error(err, res);
   }
