@@ -284,7 +284,7 @@ exports.updateList = async (req, res) => {
 
     await removeDeletedTagsAndCategoriesFromItems({ list: oldList, req, res });
 
-    const resultList = (await List.findById({
+    const resultList = (await List.find({
       _id: updatedList._id,
     }, {
       items: 0,
